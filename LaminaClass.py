@@ -31,6 +31,8 @@ class Lamina():
 		self.QMatrix[1, 0] = self.QMatrix[0, 1] = self.v12 * self.E2 / self.Q
 		self.QMatrix[2, 2] = self.G12
 
+	def calcStresses(self, globalStrains):
+		pass
 
 if __name__ == '__main__':
 	# Testing function to match lecture values
