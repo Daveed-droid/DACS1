@@ -4,10 +4,10 @@
 @Author ：David Canosa Ybarra
 @Date ：19/03/2024 11:44
 """
-
+from LaminaClass import Lamina
 
 class Laminate():
-	def __init__(self, LayUp):
+	def __init__(self, LayUp: list, Lamina: Lamina):
 		pass
 
 	def calcABD(self):
