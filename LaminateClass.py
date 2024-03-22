@@ -6,7 +6,7 @@
 """
 
 
-def Laminate():
+class Laminate():
 	def __init__(self, LayUp):
 		pass
 
