@@ -58,14 +58,15 @@ class Laminate():
 		self.BMatrix = np.zeros((3, 3))
 		self.DMatrix = np.zeros((3, 3))
 		# i and j are matrix components, k is the ply in the layup
-		# calculating the A Matrix
 		for k in range(len(self.LayUp)):
 			Q = self.QGlobalAr[k]
+			# calculating the A Matrix
 			self.AMatrix += Q * (self.zlst[k + 1] - self.zlst[k])
 			# calculating the B Matrix
 			self.BMatrix += 0.5 * Q * (self.zlst[k + 1] ** 2 - self.zlst[k] ** 2)
 			# calculating the D Matrix
 			self.DMatrix += 3 ** -1 * Q * (self.zlst[k + 1] ** 3 - self.zlst[k] ** 3)
+		# place the matrices together into the ABD matrix
 		ABD_top = np.hstack((self.AMatrix, self.BMatrix))
 		ABD_bottom = np.hstack((self.BMatrix, self.DMatrix))
 		self.ABD = np.vstack((ABD_top, ABD_bottom))
@@ -79,8 +80,19 @@ class Laminate():
 		return np.linalg.inv(self.ABD) @ Load
 
 	def calcPlyStrains(self, Load):
-		return np.linalg.inv(self.ABD) @ Load
+		globalStains = self.calcGlobalStrains(Load)
+		plyStrains = np.zeros((3, len(self.LayUp)))
+		zAvg = [self.zlst[k + 1] + self.zlst[k] for k in range(len(self.zlst) - 1)]
+		for k in range(len(self.LayUp)):
+			plyStrains[:, k] = (globalStains[0:3] + zAvg[k] * globalStains[3:6]).T
+		return plyStrains
 
+	def calcStresses(self, Load):
+		plyStrains = self.calcPlyStrains(Load)
+		plyStresses = np.zeros((3, len(self.LayUp)))
+		for k in range(len(self.LayUp)):
+			plyStresses[:, k] = self.QGlobalAr[k] @ plyStrains[:, k]
+		return plyStresses
 	def calcEngConst(self):
 		"""
 		Calculates the engineering constants of the laminate
@@ -97,9 +109,6 @@ class Laminate():
 		vyx = Axy / Axx
 		Gxy = Ass / self.h
 		return [Ex, Ey, vxy, vyx, Gxy]
-
-	def calcStresses(self, Load):
-		strains = self.calcGlobalStrains(Load)
 
 	def calcStressEnvelope(self):
 		pass
