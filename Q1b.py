@@ -13,7 +13,7 @@ def Q1b(Lamina_mean = Lamina_mean, Laminate = Laminate):
 	LayUp = [0, 0, 90, 30, 90]
 	Laminate = Laminate(LayUp, Lamina_mean)
 	Load = np.array([0.2e2, 1.8e4, 0, 18e3, 0, 0]).T
-	print(Laminate.calcStrains(Load))
+	print(Laminate.calcGlobalStrains(Load))
 
 
 Q1b()

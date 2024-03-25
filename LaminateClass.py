@@ -37,8 +37,8 @@ class Laminate():
 		Q22 = self.Lamina.QMatrix[1, 1]
 		Q66 = self.Lamina.QMatrix[2, 2]
 		for i, theta in enumerate(self.LayUp):
-			m = np.sin(np.deg2rad(theta))
-			n = np.cos(np.deg2rad(theta))
+			n = np.sin(np.deg2rad(theta))
+			m = np.cos(np.deg2rad(theta))
 			Qxx = Q11 * m ** 4 + 2 * (Q12 + 2 * Q66) * m ** 2 * n ** 2 + Q22 * n ** 4
 			Qxy = (Q11 + Q22 - 4 * Q66) * m ** 2 * n ** 2 + Q12 * (m ** 4 + n ** 4)
 			Qyy = Q11 * n ** 4 + 2 * (Q12 + 2 * Q66) * m ** 2 * n ** 2 + Q22 * m ** 4
@@ -70,12 +70,15 @@ class Laminate():
 		ABD_bottom = np.hstack((self.BMatrix, self.DMatrix))
 		self.ABD = np.vstack((ABD_top, ABD_bottom))
 
-	def calcStrains(self, Load):
+	def calcGlobalStrains(self, Load):
 		"""
-		Calculates the deflection of the laminate at a prescribed load
+		Calculates the strain and curvature of the laminate at a prescribed load
 		:param Load: A 6x1 numpy array column vector with the loads applied [Nx, Ny, Nz, Mx, My, Mz]
 		:return: The deflections of the laminate
 		"""
+		return np.linalg.inv(self.ABD) @ Load
+
+	def calcPlyStrains(self, Load):
 		return np.linalg.inv(self.ABD) @ Load
 
 	def calcEngConst(self):
@@ -96,7 +99,7 @@ class Laminate():
 		return [Ex, Ey, vxy, vyx, Gxy]
 
 	def calcStresses(self, Load):
-		strains = self.calcStrains(Load)
+		strains = self.calcGlobalStrains(Load)
 
 	def calcStressEnvelope(self):
 		pass
@@ -128,3 +131,4 @@ if __name__ == "__main__":
 	_, Ey, _, _, _ = Laminate_1.calcEngConst()
 	Ex, _, _, _, _ = Laminate_2.calcEngConst()
 	assert np.isclose(Ex, Ey)
+	Laminate_3 = Laminate([15, 0, 0, 75], Lamina_)
