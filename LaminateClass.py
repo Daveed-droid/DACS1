@@ -100,8 +100,11 @@ class Laminate():
 		Gxy = Ass / self.h
 		return [Ex, Ey, vxy, vyx, Gxy]
 
+	def __repr__(self):
+		return f"Laminate of layup {self.LayUp}"
 
 if __name__ == "__main__":
+	# Simple test to see if a lamina turned 90 deg gives the same tensile stiffness
 	E1 = 140 * 10 ** 9
 	E2 = 10 * 10 ** 9
 	G12 = 5 * 10 ** 9
