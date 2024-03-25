@@ -7,6 +7,9 @@
 import numpy as np
 
 class Lamina():
+	"""
+	This class serves as a material data input to the Laminate class
+	"""
 	def __init__(self, t, E1, E2, v12, G12):
 		self.t = t
 		self.E1 = E1

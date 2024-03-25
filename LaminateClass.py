@@ -8,6 +8,9 @@ from LaminaClass import Lamina
 import numpy as np
 
 class Laminate():
+	"""
+	The laminate class will be used to do operations on the layup
+	"""
 	def __init__(self, LayUp: list, Lamina: Lamina):
 		"""
 		Initializes the laminate class, this class takes in a layup and lamina
@@ -54,6 +57,7 @@ class Laminate():
 		self.AMatrix = np.zeros((3, 3))
 		self.BMatrix = np.zeros((3, 3))
 		self.DMatrix = np.zeros((3, 3))
+		# i and j are matrix components, k is the ply in the layup
 		# calculating the A Matrix
 		for i in range(3):
 			for j in range(3):
@@ -99,6 +103,9 @@ class Laminate():
 		vyx = Axy / Axx
 		Gxy = Ass / self.h
 		return [Ex, Ey, vxy, vyx, Gxy]
+
+	def calcStressEnvelope(self):
+		pass
 
 	def __repr__(self):
 		return f"Laminate of layup {self.LayUp}"
