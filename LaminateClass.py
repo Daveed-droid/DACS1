@@ -9,6 +9,12 @@ import numpy as np
 
 class Laminate():
 	def __init__(self, LayUp: list, Lamina: Lamina, t: float):
+		"""
+		Initializes the laminate class, this class takes in a layup and lamina
+		:param LayUp: A list of angles [deg] starting from the bottom ply
+		:param Lamina: A lamina object
+		:param t: The lamina thickness
+		"""
 		self.LayUp = LayUp
 		self.Lamina = Lamina
 		self.t = t
@@ -18,14 +24,18 @@ class Laminate():
 		self.calcABD()
 
 	def calcQGlobalLaminas(self):
+		"""
+		Calculates the Q matrix of all the laminas when placed at an angle
+		:return: None
+		"""
 		self.QGlobalar = np.zeros((1, len(self.LayUp)))
 		Q11 = self.Lamina.QMatrix[0, 0]
 		Q12 = self.Lamina.QMatrix[0, 1]
 		Q22 = self.Lamina.QMatrix[1, 1]
 		Q66 = self.Lamina.QMatrix[2, 2]
 		for i, theta in enumerate(self.LayUp):
-			m = np.sin(np.rad2deg(theta))
-			n = np.cos(np.rad2deg(theta))
+			m = np.sin(np.deg2rad(theta))
+			n = np.cos(np.deg2rad(theta))
 			Qxx = Q11 ** 4 + 2 * (Q12 + 2 * Q66) * m ** 2 * n ** 2 + Q22 * n ** 4
 			Qxy = (Q11 + Q22 - 4 * Q66) * m ** 2 * n ** 2 + Q12 * (m ** 4 + n ** 4)
 			Qyy = Q11 * n ** 4 + 2 * (Q12 + 2 * Q66) * m ** 2 * n ** 2 + Q22 * m ** 4
@@ -37,6 +47,10 @@ class Laminate():
 									[Qxs, Qys, Qss]])
 			self.QGlobalar[i] = QMatrix_glo
 	def calcABD(self):
+		"""
+		Calculates the ABD matrix of the laminate
+		:return:
+		"""
 		self.AMatrix = np.zeros((3, 3))
 		self.BMatrix = np.zeros((3, 3))
 		self.DMatrix = np.zeros((3, 3))
@@ -62,66 +76,26 @@ class Laminate():
 		ABD_bottom = np.hstack((self.BMatrix, self.DMatrix))
 		self.ABD = np.vstack((ABD_top, ABD_bottom))
 	def calcStrains(self, Load):
+		"""
+		Calculates the deflection of the laminate at a prescribed load
+		:param Load: A 6x1 numpy array column vector with the loads applied
+		:return: The deflections of the laminate
+		"""
 		return np.linalg.inv(self.ABD) @ Load
 
 	def calcEngConst(self):
-		pass
+		"""
+		Calculates the engineering constants of the laminate
+		:return: [Ex, Ey, vxy, vyx, Gxy]
+		"""
+		Axx = self.ABD[0, 0]
+		Ayy = self.ABD[1, 1]
+		Axy = self.ABD[0, 1]
+		Ass = self.ABD[2, 2]
 
-
-def Ex(theta, E1, E2, G12, v12):
-	m = np.sin(theta)
-	n = np.cos(theta)
-	_a = m ** 4 / E1
-	_b = (G12 ** -1 - 2 * v12 / E1) * m ** 2 * n ** 2
-	_c = n ** 4 / E2
-	_Ex = (_a + _b + _c) ** -1
-	return _Ex
-
-
-def vxy(theta, Ex, E1, E2, G12, v12):
-	m = np.sin(theta)
-	n = np.cos(theta)
-	_a = Ex(theta, E1, E2, G12, v12)
-	_b = v12 / E1 * (m ** 4 + n ** 4)
-	_c = (1 / E1 + 1 / E2 - 1 / G12) * m ** 2 * n ** 2
-	_vxy = _a * (_b - _c)
-	return _vxy
-
-
-def Ey(theta, E1, E2, G12, v12):
-	m = np.sin(theta)
-	n = np.cos(theta)
-	_a = n ** 4 / E1
-	_b = (G12 ** -1 - 2 * v12 / E1) * m ** 2 * n ** 2
-	_c = m ** 4 / E2
-	_Ey = (_a + _b + _c) ** -1
-	return _Ey
-
-
-def Gxy(theta, E1, E2, G12, v12):
-	m = np.sin(theta)
-	n = np.cos(theta)
-	_a = 2 * (2 / E1 + 2 / E2 + 4 * v12 / E1 - 1 / G12) * m ** 2 * n ** 2
-	_b = 1 / G12 * (m ** 4 + n ** 4)
-	_Gxy = (_a + _b) ** -1
-	return _Gxy
-
-
-def etaxs(theta, Ex, E1, E2, G12, v12):
-	m = np.sin(theta)
-	n = np.cos(theta)
-	_a = Ex(theta, E1, E2, G12, v12)
-	_b = (2 / E1 + 2 * v12 / E1 - 1 / G12) * m ** 3 * n
-	_c = (2 / E2 + 2 * v12 / E1 - 1 / G12) * n ** 3 * m
-	_etaxs = _a * (_b - _c)
-	return _etaxs
-
-
-def etays(theta, Ex, E1, E2, G12, v12):
-	m = np.sin(theta)
-	n = np.cos(theta)
-	_a = Ey(theta, E1, E2, G12, v12)
-	_b = (2 / E1 + 2 * v12 / E1 - 1 / G12) * n ** 3 * m
-	_c = (2 / E2 + 2 * v12 / E1 - 1 / G12) * m ** 3 * n
-	_etays = _a * (_b - _c)
-	return _etays
+		Ex = (Axx * Ayy - Axy ** 2) / (self.h * Ayy)
+		Ey = (Axx * Ayy - Axy ** 2) / (self.h * Axx)
+		vxy = Axy / Ayy
+		vyx = Axy / Axx
+		Gxy = Ass / self.h
+		return [Ex, Ey, vxy, vyx, Gxy]
