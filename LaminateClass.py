@@ -8,7 +8,7 @@ from LaminaClass import Lamina
 import numpy as np
 
 class Laminate():
-	def __init__(self, LayUp: list, Lamina: Lamina, t: float):
+	def __init__(self, LayUp: list, Lamina: Lamina):
 		"""
 		Initializes the laminate class, this class takes in a layup and lamina
 		:param LayUp: A list of angles [deg] starting from the bottom ply
@@ -17,7 +17,7 @@ class Laminate():
 		"""
 		self.LayUp = LayUp
 		self.Lamina = Lamina
-		self.t = t
+		self.t = self.Lamina.t
 		self.h = t * len(LayUp)
 		self.zlst = np.linspace(-self.h / 2, self.h / 2, len(self.LayUp), endpoint = True)
 		self.calcQGlobalLaminas()
@@ -28,7 +28,7 @@ class Laminate():
 		Calculates the Q matrix of all the laminas when placed at an angle
 		:return: None
 		"""
-		self.QGlobalar = np.zeros((1, len(self.LayUp)))
+		self.QGlobalar = list(range(len(self.LayUp)))
 		Q11 = self.Lamina.QMatrix[0, 0]
 		Q12 = self.Lamina.QMatrix[0, 1]
 		Q22 = self.Lamina.QMatrix[1, 1]
@@ -57,19 +57,19 @@ class Laminate():
 		# calculating the A Matrix
 		for i in range(3):
 			for j in range(3):
-				for k in range(len(self.LayUp)):
+				for k in range(len(self.LayUp) - 1):
 					Q = self.QGlobalar[k]
 					self.AMatrix[i, j] += Q[i, j] * (self.zlst[k + 1] - self.zlst[k])
 		# calculating the B Matrix
 		for i in range(3):
 			for j in range(3):
-				for k in range(len(self.LayUp)):
+				for k in range(len(self.LayUp) - 1):
 					Q = self.QGlobalar[k]
 					self.BMatrix[i, j] += 0.5 * Q[i, j] * (self.zlst[k + 1] ** 2 - self.zlst[k] ** 2)
 		# calculating the D Matrix
 		for i in range(3):
 			for j in range(3):
-				for k in range(len(self.LayUp)):
+				for k in range(len(self.LayUp) - 1):
 					Q = self.QGlobalar[k]
 					self.DMatrix[i, j] += 3 ** -1 * Q[i, j] * (self.zlst[k + 1] ** 3 - self.zlst[k] ** 3)
 		ABD_top = np.hstack((self.AMatrix, self.BMatrix))
@@ -99,3 +99,24 @@ class Laminate():
 		vyx = Axy / Axx
 		Gxy = Ass / self.h
 		return [Ex, Ey, vxy, vyx, Gxy]
+
+
+if __name__ == "__main__":
+	E1 = 140 * 10 ** 9
+	E2 = 10 * 10 ** 9
+	G12 = 5 * 10 ** 9
+	v12 = 0.3
+	t = 0.125
+
+	v21 = v12 * E2 / E1
+	Q = 1 - v12 * v21
+	Q11 = E1 / Q
+	Q22 = E2 / Q
+	Q12 = v12 * E2 / Q
+	Q66 = G12
+	Lamina_ = Lamina(t, E1, E2, G12, v12)
+	Laminate_1 = Laminate([0, 0, 0, 0], Lamina_)
+	Laminate_2 = Laminate([90, 90, 90, 90], Lamina_)
+	_, Ey, _, _, _ = Laminate_1.calcEngConst()
+	Ex, _, _, _, _ = Laminate_2.calcEngConst()
+	assert np.isclose(Ex, Ey)
