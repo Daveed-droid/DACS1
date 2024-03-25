@@ -22,7 +22,7 @@ class Laminate():
 		self.Lamina = Lamina
 		self.t = self.Lamina.t
 		self.h = self.t * len(LayUp)
-		self.zlst = np.linspace(-self.h / 2, self.h / 2, len(self.LayUp), endpoint = True)
+		self.zlst = np.linspace(-self.h / 2, self.h / 2, len(self.LayUp) + 1, endpoint = True)
 		self.calcQGlobalLaminas()
 		self.calcABD()
 
@@ -31,7 +31,7 @@ class Laminate():
 		Calculates the Q matrix of all the laminas when placed at an angle
 		:return: None
 		"""
-		self.QGlobalar = list(range(len(self.LayUp)))
+		self.QGlobalAr = list(range(len(self.LayUp)))
 		Q11 = self.Lamina.QMatrix[0, 0]
 		Q12 = self.Lamina.QMatrix[0, 1]
 		Q22 = self.Lamina.QMatrix[1, 1]
@@ -48,7 +48,7 @@ class Laminate():
 			QMatrix_glo = np.array([[Qxx, Qxy, Qxs],
 									[Qxy, Qyy, Qys],
 									[Qxs, Qys, Qss]])
-			self.QGlobalar[i] = QMatrix_glo
+			self.QGlobalAr[i] = QMatrix_glo
 	def calcABD(self):
 		"""
 		Calculates the ABD matrix of the laminate
@@ -61,20 +61,20 @@ class Laminate():
 		# calculating the A Matrix
 		for i in range(3):
 			for j in range(3):
-				for k in range(len(self.LayUp) - 1):
-					Q = self.QGlobalar[k]
+				for k in range(len(self.LayUp)):
+					Q = self.QGlobalAr[k]
 					self.AMatrix[i, j] += Q[i, j] * (self.zlst[k + 1] - self.zlst[k])
 		# calculating the B Matrix
 		for i in range(3):
 			for j in range(3):
-				for k in range(len(self.LayUp) - 1):
-					Q = self.QGlobalar[k]
+				for k in range(len(self.LayUp)):
+					Q = self.QGlobalAr[k]
 					self.BMatrix[i, j] += 0.5 * Q[i, j] * (self.zlst[k + 1] ** 2 - self.zlst[k] ** 2)
 		# calculating the D Matrix
 		for i in range(3):
 			for j in range(3):
-				for k in range(len(self.LayUp) - 1):
-					Q = self.QGlobalar[k]
+				for k in range(len(self.LayUp)):
+					Q = self.QGlobalAr[k]
 					self.DMatrix[i, j] += 3 ** -1 * Q[i, j] * (self.zlst[k + 1] ** 3 - self.zlst[k] ** 3)
 		ABD_top = np.hstack((self.AMatrix, self.BMatrix))
 		ABD_bottom = np.hstack((self.BMatrix, self.DMatrix))
@@ -131,6 +131,10 @@ if __name__ == "__main__":
 	Lamina_ = Lamina(t, E1, E2, G12, v12)
 	Laminate_1 = Laminate([0, 0, 0, 0], Lamina_)
 	Laminate_2 = Laminate([90, 90, 90, 90], Lamina_)
+	print(Laminate_1.ABD)
+	print(Laminate_2.ABD)
+	print(Laminate_1.calcEngConst())
+	print(Laminate_2.calcEngConst())
 	_, Ey, _, _, _ = Laminate_1.calcEngConst()
 	Ex, _, _, _, _ = Laminate_2.calcEngConst()
 	assert np.isclose(Ex, Ey)
