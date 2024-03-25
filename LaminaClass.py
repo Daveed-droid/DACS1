@@ -31,7 +31,8 @@ class Lamina():
 		self.Q = 1 - self.v12 * self.v21
 		self.QMatrix[0, 0] = self.E1 / self.Q
 		self.QMatrix[1, 1] = self.E2 / self.Q
-		self.QMatrix[1, 0] = self.QMatrix[0, 1] = self.v12 * self.E2 / self.Q
+		self.QMatrix[1, 0] = (self.v12 * self.E2) / self.Q
+		self.QMatrix[0, 1] = self.QMatrix[1, 0]
 		self.QMatrix[2, 2] = self.G12
 
 	def calcStresses(self, globalStrains):
@@ -43,6 +44,6 @@ if __name__ == '__main__':
 	E2 = 10 * 10 ** 9
 	G12 = 5 * 10 ** 9
 	v12 = 0.3
-	t = 0.125
+	t = 0.125e-3
 	Lamina = Lamina(t, E1, E2, v12, G12)
 	print(Lamina.QMatrix)

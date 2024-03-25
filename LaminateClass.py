@@ -130,9 +130,9 @@ if __name__ == "__main__":
 	Q22 = E2 / Q
 	Q12 = v12 * E2 / Q
 	Q66 = G12
-	Lamina_ = Lamina(t, E1, E2, G12, v12)
-	Laminate_1 = Laminate([0, 0, 0, 0], Lamina_)
-	Laminate_2 = Laminate([90, 90, 90, 90], Lamina_)
+	Lamina_ = Lamina(t, E1, E2, v12, G12)
+	Laminate_1 = Laminate([15, 15, 15, 15], Lamina_)
+	Laminate_2 = Laminate([105, 105, 105, 105], Lamina_)
 	print(Laminate_1.ABD)
 	print(Laminate_2.ABD)
 	print(Laminate_1.calcEngConst())
