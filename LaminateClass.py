@@ -10,6 +10,9 @@ class Laminate():
 	def __init__(self, LayUp: list, Lamina: Lamina):
 		pass
 
+	def calcQGMatrix(self):
+
+
 	def calcABD(self):
 		pass
 
