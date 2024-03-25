@@ -39,7 +39,7 @@ class Laminate():
 		for i, theta in enumerate(self.LayUp):
 			m = np.sin(np.deg2rad(theta))
 			n = np.cos(np.deg2rad(theta))
-			Qxx = Q11 ** 4 + 2 * (Q12 + 2 * Q66) * m ** 2 * n ** 2 + Q22 * n ** 4
+			Qxx = Q11 * m ** 4 + 2 * (Q12 + 2 * Q66) * m ** 2 * n ** 2 + Q22 * n ** 4
 			Qxy = (Q11 + Q22 - 4 * Q66) * m ** 2 * n ** 2 + Q12 * (m ** 4 + n ** 4)
 			Qyy = Q11 * n ** 4 + 2 * (Q12 + 2 * Q66) * m ** 2 * n ** 2 + Q22 * m ** 4
 			Qxs = (Q11 - Q12 - 2 * Q66) * n * m ** 3 + (Q12 - Q22 + 2 * Q66) * n ** 3 * m
@@ -59,23 +59,13 @@ class Laminate():
 		self.DMatrix = np.zeros((3, 3))
 		# i and j are matrix components, k is the ply in the layup
 		# calculating the A Matrix
-		for i in range(3):
-			for j in range(3):
-				for k in range(len(self.LayUp)):
-					Q = self.QGlobalAr[k]
-					self.AMatrix[i, j] += Q[i, j] * (self.zlst[k + 1] - self.zlst[k])
-		# calculating the B Matrix
-		for i in range(3):
-			for j in range(3):
-				for k in range(len(self.LayUp)):
-					Q = self.QGlobalAr[k]
-					self.BMatrix[i, j] += 0.5 * Q[i, j] * (self.zlst[k + 1] ** 2 - self.zlst[k] ** 2)
-		# calculating the D Matrix
-		for i in range(3):
-			for j in range(3):
-				for k in range(len(self.LayUp)):
-					Q = self.QGlobalAr[k]
-					self.DMatrix[i, j] += 3 ** -1 * Q[i, j] * (self.zlst[k + 1] ** 3 - self.zlst[k] ** 3)
+		for k in range(len(self.LayUp)):
+			Q = self.QGlobalAr[k]
+			self.AMatrix += Q * (self.zlst[k + 1] - self.zlst[k])
+			# calculating the B Matrix
+			self.BMatrix += 0.5 * Q * (self.zlst[k + 1] ** 2 - self.zlst[k] ** 2)
+			# calculating the D Matrix
+			self.DMatrix += 3 ** -1 * Q * (self.zlst[k + 1] ** 3 - self.zlst[k] ** 3)
 		ABD_top = np.hstack((self.AMatrix, self.BMatrix))
 		ABD_bottom = np.hstack((self.BMatrix, self.DMatrix))
 		self.ABD = np.vstack((ABD_top, ABD_bottom))
