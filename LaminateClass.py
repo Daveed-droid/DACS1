@@ -21,7 +21,7 @@ class Laminate():
 		self.LayUp = LayUp
 		self.Lamina = Lamina
 		self.t = self.Lamina.t
-		self.h = t * len(LayUp)
+		self.h = self.t * len(LayUp)
 		self.zlst = np.linspace(-self.h / 2, self.h / 2, len(self.LayUp), endpoint = True)
 		self.calcQGlobalLaminas()
 		self.calcABD()
@@ -79,10 +79,11 @@ class Laminate():
 		ABD_top = np.hstack((self.AMatrix, self.BMatrix))
 		ABD_bottom = np.hstack((self.BMatrix, self.DMatrix))
 		self.ABD = np.vstack((ABD_top, ABD_bottom))
+
 	def calcStrains(self, Load):
 		"""
 		Calculates the deflection of the laminate at a prescribed load
-		:param Load: A 6x1 numpy array column vector with the loads applied
+		:param Load: A 6x1 numpy array column vector with the loads applied [Nx, Ny, Nz, Mx, My, Mz]
 		:return: The deflections of the laminate
 		"""
 		return np.linalg.inv(self.ABD) @ Load
@@ -103,6 +104,9 @@ class Laminate():
 		vyx = Axy / Axx
 		Gxy = Ass / self.h
 		return [Ex, Ey, vxy, vyx, Gxy]
+
+	def calcStresses(self, Load):
+		strains = self.calcStrains(Load)
 
 	def calcStressEnvelope(self):
 		pass
