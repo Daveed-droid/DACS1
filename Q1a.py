@@ -4,33 +4,55 @@
 @Author ：David Canosa Ybarra
 @Date ：19/03/2024 11:45
 """
-#from LaminaClass import Lamina
-#from LaminateClass import Laminate
+from LaminaClass import Lamina
+from LaminateClass import Laminate
 import numpy as np
 import matplotlib.pyplot as plt
 
 
 def Q1a(n):
-    angle = np.arange(0,8.1,1)
-    #print(np.flip(angle))
-    for i in angle:
-        laminates = []
-        LayUp = [15, i, -i, 75, 75]
+    E1 = 140 * 10 ** 9
+    E2 = 10 * 10 ** 9
+    G12 = 5 * 10 ** 9
+    v12 = 0.3
+    t = 0.125
 
+    v21 = v12 * E2 / E1
+
+    Lamina_ = Lamina(t, E1, E2, v12, G12)
+    angle = np.arange(0,90.1,1)
+    #print(np.flip(angle))
+    laminates = []
+    k = 0
+    Ex = []
+    Ey = []
+    vxy = []
+    vyx = []
+    Gxy = []
+    for i in angle:
+
+        #LayUp = [15, i, -i, 75, 75]
+        LayUp = [i] #test
         for j in range(0, n):
 
             #LayUp.append(np.flip(LayUp))
             LayUp = np.append(LayUp, np.flip(LayUp))
-        plys = Laminate(LayUp, Lamina)
-        laminates.append[plys]
-        laminates[i].calcEngConst()
+        plys = Laminate(LayUp, Lamina_)
+        laminates.append(plys)
+
+        laminates[k].calcEngConst()
+        #print(LayUp)
+        #print(laminates[k].calcEngConst()[0]*10**-9, LayUp)
+        Ex.append(laminates[k].calcEngConst()[0]*10**-9)
+        Ey.append(laminates[k].calcEngConst()[1]*10**-9)
+        vxy.append(laminates[k].calcEngConst()[2])
+        vyx.append(laminates[k].calcEngConst()[3])
+        Gxy.append(laminates[k].calcEngConst()[4]*10**-9)
+        k = k + 1
+
 
 
     # Plot the engineering constants as a function of theta
-    Ex = laminates[:].Ex
-    Ey = laminates[:].Ey
-    Gxy = laminates[:].Gxy
-    vxy = laminates[:].vxy
 
     fig, axs = plt.subplots(2,2)
     axs[0,0].plot(angle, Ex)
@@ -39,15 +61,16 @@ def Q1a(n):
     axs[1, 0].set_title('Ey')
     axs[0, 1].plot(angle, Gxy)
     axs[0, 1].set_title('Gxy')
-    axs[1, 1].plot(angle, vxy)
-    axs[1, 1].set_title('vxy')
+    axs[1, 1].plot(angle, vxy, vyx)
+    axs[1, 1].set_title('vxy, vyx')
+
     for ax in axs.flat:
         ax.set(xlabel="angle")
-
+    plt.show()
 
     print(LayUp)
 
-
+Q1a(0)
     #for i in angle:
 
         #ply = Laminate(LayUp, Lamina)
