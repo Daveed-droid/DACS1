@@ -31,8 +31,8 @@ def Q1a(n):
     Gxy = []
     for i in angle:
 
-        #LayUp = [15, i, -i, 75, 75]
-        LayUp = [i] #test, not correct compared to solutions using lec 2 eqs for poisson ratio
+        LayUp = [15, i, -i, 75, 75]
+        #LayUp = [20] #test, not correct compared to solutions using lec 2 eqs for poisson ratio
         for j in range(0, n):
 
             #LayUp.append(np.flip(LayUp))
@@ -72,6 +72,6 @@ def Q1a(n):
 
     print(LayUp)
 
-Q1a(0)
+Q1a(1)
 
 
