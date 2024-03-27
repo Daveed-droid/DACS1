@@ -15,6 +15,7 @@ def Q1b(Lamina_mean = Lamina_mean, Laminate = Laminate):
 	Load = np.array([0.2e2, 1.8e4, 0, 18e3, 0, 0]).T
 	print(Laminate.calcPlyStrains(Load))
 	print(Laminate.calcStresses(Load))
+	plt.plot(Laminate)
 
 
 Q1b()

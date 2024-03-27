@@ -6,6 +6,7 @@
 """
 from LaminaClass import Lamina
 import numpy as np
+
 class Laminate():
 	"""
 	The laminate class will be used to do operations on the layup
@@ -38,7 +39,6 @@ class Laminate():
 		for i, theta in enumerate(self.LayUp):
 			n = np.sin(np.deg2rad(theta))
 			m = np.cos(np.deg2rad(theta))
-
 			Qxx = Q11 * m ** 4 + 2 * (Q12 + 2 * Q66) * m ** 2 * n ** 2 + Q22 * n ** 4
 			Qxy = (Q11 + Q22 - 4 * Q66) * m ** 2 * n ** 2 + Q12 * (m ** 4 + n ** 4)
 			Qyy = Q11 * n ** 4 + 2 * (Q12 + 2 * Q66) * m ** 2 * n ** 2 + Q22 * m ** 4
@@ -49,8 +49,6 @@ class Laminate():
 									[Qxy, Qyy, Qys],
 									[Qxs, Qys, Qss]])
 			self.QGlobalAr[i] = QMatrix_glo
-
-
 	def calcABD(self):
 		"""
 		Calculates the ABD matrix of the laminate
@@ -124,7 +122,7 @@ if __name__ == "__main__":
 	E2 = 10 * 10 ** 9
 	G12 = 5 * 10 ** 9
 	v12 = 0.3
-	t = 0.125
+	t = 0.125e-3
 
 	v21 = v12 * E2 / E1
 	Q = 1 - v12 * v21
@@ -133,13 +131,14 @@ if __name__ == "__main__":
 	Q12 = v12 * E2 / Q
 	Q66 = G12
 	Lamina_ = Lamina(t, E1, E2, v12, G12)
-	Laminate_1 = Laminate([15, 15, 90, 0], Lamina_)
-	#Laminate_2 = Laminate([105, 105, 105, 105], Lamina_)
+	Laminate_1 = Laminate([15, 15, 15, 15], Lamina_)
+	Laminate_2 = Laminate([105, 105, 105, 105], Lamina_)
 	print(Laminate_1.ABD)
-	#print(Laminate_2.ABD)
+	print(Laminate_2.ABD)
 	print(Laminate_1.calcEngConst())
-	#print(Laminate_2.calcEngConst())
-	#_, Ey, _, _, _ = Laminate_1.calcEngConst()
-	#Ex, _, _, _, _ = Laminate_2.calcEngConst()
-	#assert np.isclose(Ex, Ey)
-	#Laminate_3 = Laminate([15, 0, 0, 75], Lamina_)
+	print(Laminate_2.calcEngConst())
+	_, Ey, vxy, _, _ = Laminate_1.calcEngConst()
+	Ex, _, _, _, _ = Laminate_2.calcEngConst()
+	assert np.isclose(Ex, Ey)
+	Laminate_3 = Laminate([15, 0, 0, 75], Lamina_)
+	print(vxy)
