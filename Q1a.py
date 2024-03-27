@@ -20,7 +20,7 @@ def Q1a(n):
     v21 = v12 * E2 / E1
 
     Lamina_ = Lamina(t, E1, E2, v12, G12)
-    angle = np.arange(0,90.1,1)
+    angle = np.arange(0,90.1,5)
     #print(np.flip(angle))
     laminates = []
     k = 0
@@ -32,7 +32,7 @@ def Q1a(n):
     for i in angle:
 
         #LayUp = [15, i, -i, 75, 75]
-        LayUp = [i] #test
+        LayUp = [i] #test, not correct compared to solutions using lec 2 eqs for poisson ratio
         for j in range(0, n):
 
             #LayUp.append(np.flip(LayUp))
@@ -53,7 +53,8 @@ def Q1a(n):
 
 
     # Plot the engineering constants as a function of theta
-
+    #print(vxy)
+    #print(vyx)
     fig, axs = plt.subplots(2,2)
     axs[0,0].plot(angle, Ex)
     axs[0,0].set_title('Ex')
@@ -61,7 +62,8 @@ def Q1a(n):
     axs[1, 0].set_title('Ey')
     axs[0, 1].plot(angle, Gxy)
     axs[0, 1].set_title('Gxy')
-    axs[1, 1].plot(angle, vxy, vyx)
+    axs[1, 1].plot(angle, vxy)
+    axs[1, 1].plot(angle, vyx)
     axs[1, 1].set_title('vxy, vyx')
 
     for ax in axs.flat:
@@ -71,8 +73,5 @@ def Q1a(n):
     print(LayUp)
 
 Q1a(0)
-    #for i in angle:
-
-        #ply = Laminate(LayUp, Lamina)
 
 
