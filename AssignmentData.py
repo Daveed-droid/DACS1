@@ -22,4 +22,4 @@ Yt_std = 8.2e6  # Pa
 S_mean = 132.8e6  # Pa
 S_std = 6.21e6  # Pa
 
-Lamina_mean = Lamina(t, E1_mean, E2_std, v12_mean, G12_mean)
+Lamina_mean = Lamina(t, E1_mean, E2_mean, v12_mean, G12_mean)

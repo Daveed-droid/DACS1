@@ -122,7 +122,7 @@ if __name__ == "__main__":
 	E2 = 10 * 10 ** 9
 	G12 = 5 * 10 ** 9
 	v12 = 0.3
-	t = 0.125
+	t = 0.125e-3
 
 	v21 = v12 * E2 / E1
 	Q = 1 - v12 * v21
@@ -137,7 +137,8 @@ if __name__ == "__main__":
 	print(Laminate_2.ABD)
 	print(Laminate_1.calcEngConst())
 	print(Laminate_2.calcEngConst())
-	_, Ey, _, _, _ = Laminate_1.calcEngConst()
+	_, Ey, vxy, _, _ = Laminate_1.calcEngConst()
 	Ex, _, _, _, _ = Laminate_2.calcEngConst()
 	assert np.isclose(Ex, Ey)
 	Laminate_3 = Laminate([15, 0, 0, 75], Lamina_)
+	print(vxy)
