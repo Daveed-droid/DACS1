@@ -71,7 +71,7 @@ class Laminate():
 		ABD_bottom = np.hstack((self.BMatrix, self.DMatrix))
 		self.ABD = np.vstack((ABD_top, ABD_bottom))
 
-	def calcGlobalStrains(self, Load):
+	def calcGloStrainsNoCurve(self, Load):
 		"""
 		Calculates the strain and curvature of the laminate at a prescribed load
 		:param Load: A 6x1 numpy array column vector with the loads applied [Nx, Ny, Nz, Mx, My, Mz]
@@ -80,14 +80,30 @@ class Laminate():
 		return np.linalg.inv(self.ABD) @ Load
 
 	def calcPlyStrains(self, Load):
-		globalStains = self.calcGlobalStrains(Load)
-		plyStrains = np.zeros((3, len(self.LayUp)))
+		GloStrains = self.calcGloStrains(Load)
+		PlyStrains = np.zeros((3, len(self.LayUp)))
+		for k, theta in enumerate(self.LayUp):
+			theta = np.deg2rad(-theta)
+			PlyStrains[:, k] = np.array([[np.cos(theta), -np.sin(theta), 1], [np.sin(theta), np.cos(theta), 1], [1, 1, 1]])@GloStrains[:, k]
+		return PlyStrains
+
+	def calcGloStrains(self, Load):
+		FlatStrains = np.linalg.inv(self.ABD)@Load
+		GloStrains = np.zeros((3, len(self.LayUp)))
 		zAvg = [self.zlst[k + 1] + self.zlst[k] for k in range(len(self.zlst) - 1)]
 		for k in range(len(self.LayUp)):
-			plyStrains[:, k] = (globalStains[0:3] + zAvg[k] * globalStains[3:6]).T
-		return plyStrains
+			GloStrains[:, k] = (FlatStrains[0:3] + zAvg[k] * FlatStrains[3:6]).T
+		return GloStrains
 
-	def calcStresses(self, Load):
+	def calcPlyStresses(self, Load):
+		GloStresses = self.calcGloStresses(Load)
+		PlyStresses = np.zeros((3, len(self.LayUp)))
+		for k, theta in enumerate(self.LayUp):
+			theta = np.deg2rad(-theta)
+			PlyStresses[:, k] = np.array([[np.cos(theta), -np.sin(theta), 1], [np.sin(theta), np.cos(theta), 1], [1, 1, 1]])@GloStresses[:, k]
+		return PlyStresses
+
+	def calcGloStresses(self, Load):
 		plyStrains = self.calcPlyStrains(Load)
 		plyStresses = np.zeros((3, len(self.LayUp)))
 		for k in range(len(self.LayUp)):
