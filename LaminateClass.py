@@ -7,6 +7,33 @@
 from LaminaClass import Lamina
 import numpy as np
 
+def StressGloTOPly(theta):
+	"""
+	Calculate the rotation matrix to go from stresses in the laminate ref frame to stresses in the lamina ref frame
+	:param theta: Angle of the ply in Radians
+	:return: Rotation matrix
+	"""
+	n = np.sin(np.deg2rad(theta))
+	m = np.cos(np.deg2rad(theta))
+	RotMat = np.array([[m**2, n**2, 2*m*n],
+					   [n**2, m**2, -2*m*n],
+					   [-m*n, m*n, m**2-n**2]])
+	return RotMat
+
+def StrainGloTOPly(theta):
+	"""
+	Calculate the rotation matrix to go from strains in the laminate ref frame to strains in the lamina ref frame
+	:param theta: Angle of the ply in Radians
+	:return: Rotation matrix
+	"""
+	n = np.sin(np.deg2rad(theta))
+	m = np.cos(np.deg2rad(theta))
+	RotMat = np.array([[m**2, n**2, m*n],
+					   [n**2, m**2, m*n],
+					   [-2*m*n, 2*m*n, m**2-n**2]])
+	return RotMat
+
+
 class Laminate():
 	"""
 	The laminate class will be used to do operations on the layup
@@ -83,8 +110,8 @@ class Laminate():
 		GloStrains = self.calcGloStrains(Load)
 		PlyStrains = np.zeros((3, len(self.LayUp)))
 		for k, theta in enumerate(self.LayUp):
-			theta = np.deg2rad(-theta)
-			PlyStrains[:, k] = np.array([[np.cos(theta), -np.sin(theta), 1], [np.sin(theta), np.cos(theta), 1], [1, 1, 1]])@GloStrains[:, k]
+			theta = np.deg2rad(theta)
+			PlyStrains[:, k] = StrainGloTOPly(theta)@GloStrains[:, k]
 		return PlyStrains
 
 	def calcGloStrains(self, Load):
@@ -99,8 +126,8 @@ class Laminate():
 		GloStresses = self.calcGloStresses(Load)
 		PlyStresses = np.zeros((3, len(self.LayUp)))
 		for k, theta in enumerate(self.LayUp):
-			theta = np.deg2rad(-theta)
-			PlyStresses[:, k] = np.array([[np.cos(theta), -np.sin(theta), 1], [np.sin(theta), np.cos(theta), 1], [1, 1, 1]])@GloStresses[:, k]
+			theta = np.deg2rad(theta)
+			PlyStresses[:, k] = StressGloTOPly(theta)@GloStresses[:, k]
 		return PlyStresses
 
 	def calcGloStresses(self, Load):
