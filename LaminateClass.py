@@ -122,6 +122,8 @@ class Laminate():
 			GloStrains[:, k] = (FlatStrains[0:3] + zAvg[k] * FlatStrains[3:6]).T
 		return GloStrains
 
+
+
 	def calcPlyStresses(self, Load):
 		GloStresses = self.calcGloStresses(Load)
 		PlyStresses = np.zeros((3, len(self.LayUp)))

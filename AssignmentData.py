@@ -19,6 +19,8 @@ Xt_mean = 1932e6  # Pa
 Xt_std = 128.3e6  # Pa
 Yt_mean = 108e6  # Pa
 Yt_std = 8.2e6  # Pa
+Xc_mean = 1480e6  # Pa
+Yc_mean = 220e6  # Pa
 S_mean = 132.8e6  # Pa
 S_std = 6.21e6  # Pa
 
