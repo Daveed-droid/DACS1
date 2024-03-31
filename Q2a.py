@@ -10,37 +10,64 @@ import matplotlib.pyplot as plt
 from LaminaClass import Lamina
 from LaminateClass import Laminate
 from AssignmentData import *
-#import AssignmentData
+
 #def Q2a(Lamina_mean = Lamina_mean, Laminate = Laminate):
 def Q2a(Lamina_mean = Lamina_mean, Laminate = Laminate):
     LayUp = [0,90,45,-45]
     LayUp = np.append(LayUp, np.flip(LayUp))
     LayUp = np.append(LayUp, np.flip(LayUp))
-    print(LayUp)
-    Laminate = Laminate(LayUp, Lamina_mean)
-    Laminate.calcABD()
-    angle = np.arange(0,181,1)
+
+    #Laminate = Laminate(LayUp, Lamina_mean)
+    #Laminate.calcABD()
+    angle = np.arange(0,181,20)
     sig = np.array([Xt_mean,Yt_mean,Xc_mean,Yc_mean,S_mean])
-    print(angle)
-    """
+
+
     for i in angle:
 
         i = 0
         dn = 50 # Load increment
-        while failure = False:
+        lpf = False
+
+        while lpf == False:
 
             dn = dn*(i+1)
-            Ns = dn*np.sin(np.degtorad(angle(i)))
-            Ny = dn*np.cos(np.degtorad(angle(i)))
+            Ns = dn*np.sin(np.deg2rad(angle[i]))
+
+            Ny = dn*np.cos(np.deg2rad(angle[i]))
             Load = np.array([0, Ny, Ns, 0, 0, 0]).T
-            stresses = Laminate.calcPlyStresses(Load)
-            
-            Apply stress failure criteria
-            """
+            plys = Laminate(LayUp, Lamina_mean)
+            stresses = plys.calcPlyStresses(Load)
+            print(stresses)
+            #Apply stress failure criteria
+            for j in LayUp:
+
+            # Puck Fibre Failure
+                if stresses[i,0] > 0:
+                    f_xff = stresses[i,0] / Xt_mean
+                else:
+                    f_xff = stresses[i, 0] / -Xc_mean
+                if stresses[i,1] > 0:
+                    f_yff = stresses[i,1] / Yt_mean
+                else:
+                    f_yff = stresses[i, 1] / -Yc_mean
+                if stresses[i,2] > 0:
+                    f_sff = stresses[i,2] / S_mean
+                else:
+                    f_sff = stresses[i, 2] / -S_mean
+                if f_xff,f_yff
 
 
 
 
-    print(Laminate.ABD)
+
+
+
+            i = i+1
+            print(i)
+            lpf = True
+
+
+
 Q2a()
 
