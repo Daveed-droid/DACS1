@@ -161,9 +161,10 @@ class Laminate():
 	def Puck(self, Load, Strength):		# Strength is list of ply properties: [Xt_mean,Xc_mean,Yt_mean,Yc_mean,S_mean]
 
 
-		f_p = 0.5	# Placeholder
+		f_FFp = 0.5
+		f_IFFp = 0.5	# Placeholder
 
-		return f_p	# f_p is result of analysis, if f_p is below 1 lamina did not fail, if it is 1 or higher lamina has failed
+		return f_FFp, f_IFFp	#  result of analysis, if f_p is below 1 lamina did not fail, if it is 1 or higher lamina has failed
 
 	def __repr__(self):
 		return f"Laminate of layup {self.LayUp}"
