@@ -29,7 +29,7 @@ def StrainGloTOPly(theta):
 	n = np.sin(np.deg2rad(theta))
 	m = np.cos(np.deg2rad(theta))
 	RotMat = np.array([[m**2, n**2, m*n],
-					   [n**2, m**2, m*n],
+					   [n**2, m**2, -m*n],
 					   [-2*m*n, 2*m*n, m**2-n**2]])
 	return RotMat
 
@@ -128,7 +128,7 @@ class Laminate():
 		GloStresses = self.calcGloStresses(Load)
 		PlyStresses = np.zeros((3, len(self.LayUp)))
 		for k, theta in enumerate(self.LayUp):
-			theta = np.deg2rad(theta)
+
 			PlyStresses[:, k] = StressGloTOPly(theta)@GloStresses[:, k]
 		return PlyStresses
 
@@ -157,6 +157,13 @@ class Laminate():
 
 	def calcStressEnvelope(self):
 		pass
+
+	def Puck(self, Load, Strength):		# Strength is list of ply properties: [Xt_mean,Xc_mean,Yt_mean,Yc_mean,S_mean]
+
+
+		f_p = 0.5	# Placeholder
+
+		return f_p	# f_p is result of analysis, if f_p is below 1 lamina did not fail, if it is 1 or higher lamina has failed
 
 	def __repr__(self):
 		return f"Laminate of layup {self.LayUp}"
