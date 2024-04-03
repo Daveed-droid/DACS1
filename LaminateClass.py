@@ -160,9 +160,30 @@ class Laminate():
 
 	def Puck(self, Load, Strength):		# Strength is list of ply properties: [Xt_mean,Xc_mean,Yt_mean,Yc_mean,S_mean]
 
+		pt12 = 0.3
+		pc12 = 0.25
+		pc11 = 0.225
+		Xt = Strength[0]
+		Xc = Strength[1]
+		Yt = Strength[2]
+		Yc = Strength[3]
+		S = Strength[4]
+		N1 = Load[0]
+		N2 = Load[1]
+		N12 = Load[2]
+		N12c = S*(1+2*pc11)**0.5
+		Ra = pc11*S/pc12
+		if N2 >= 0:	#Mode A
 
-		f_FFp = 0.5
-		f_IFFp = 0.5	# Placeholder
+			f_IFFp = (((1/Yt-pt12/S)*N2)**2+(N12/S)**2)**0.5+pt12*S/N2
+		elif abs(N2/N12) <= abs(Ra/N12c):#Mode B
+			f_IFFp = ((N12/S)**2+(pc12*N2/S)**2)**0.5+pc12*N2/S
+		else:#Mode C
+			f_IFFp = ((N12/(2*(1+pc11)*S))**2+(N2/Yc)**2)*Yc/-N2
+		if N1 >= 0: #FF tension
+			f_FFp = N1/Xt
+		else: #FF compression
+			f_FFp = -N1/Xc
 
 		return f_FFp, f_IFFp	#  result of analysis, if f_p is below 1 lamina did not fail, if it is 1 or higher lamina has failed
 
