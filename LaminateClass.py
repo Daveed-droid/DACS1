@@ -173,10 +173,13 @@ class Laminate():
 		Yt = Strength[2]
 		Yc = Strength[3]
 		S = Strength[4]
-		N1 = Load[0]
-		N2 = Load[1]
-		N12 = Load[2]
+		Force = np.array([Load[0], Load[1], Load[2], 0, 0, 0]).T
+		stresses = self.calcPlyStresses(Force)
+		N1 = stresses[0]
+		N2 = stresses[1]
+		N12 = stresses[2]
 		N12c = S*(1+2*pc11)**0.5
+
 		Ra = pc11*S/pc12
 		if N2 >= 0:	#Mode A
 
