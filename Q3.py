@@ -11,23 +11,27 @@ from LaminateClass import Laminate
 import matplotlib.pyplot as plt
 
 
-def Q3(LayUp, Load, n = 1000):
+def Q3(LayUp, Load, n = 10):
 	LPF = []
 	for n in range(n):
-		# Random pick
-		props = []
-		for [mean, std] in Lamina_props:
-			props.append(np.random.normal(mean, std))
-		E1, E2, v12, G12 = props[0:4]
-		Lamina_ = Lamina(t, E1, E2, v12, G12)
-		Xt, Yt, Xc, Yc, S = props[4:9]
-		Lamina_.setStrengths(Xt, Yt, Xc, Yc, S)
-		Laminate_ = Laminate(LayUp, Lamina_)
+		LaminaLst=[]
+		for i in range(len(LayUp)):
+			# Random pick
+			props = []
+			for [mean, std] in Lamina_props:
+				props.append(np.random.normal(mean, std))
+			E1, E2, v12, G12 = props[0:4]
+			Lamina_ = Lamina(t, E1, E2, v12, G12)
+			Xt, Yt, Xc, Yc, S = props[4:9]
+			Lamina_.setStrengths(Xt, Yt, Xc, Yc, S)
+			LaminaLst.append(Lamina_)
+		Laminate_ = Laminate(LayUp, LaminaLst)
 		LoadFPF, LoadLPF = Laminate_.calcFailure(Load)
 		LoadNorm = np.linalg.norm(Load)
 		LoadFPFNorm = np.linalg.norm(LoadFPF)
 		LPF.append(LoadFPFNorm/LoadNorm)
 	plt.hist(LPF)
+	plt.show()
 
 
 if __name__ == '__main__':
@@ -35,6 +39,6 @@ if __name__ == '__main__':
 	LayUp = np.array([0, 90, 45, -45])
 	LayUp = np.append(LayUp, np.flip(LayUp))
 	LayUp = np.append(LayUp, np.flip(LayUp))
-	Load = np.array([np.cos(np.deg2rad(30)), np.sin(np.deg2rad(30)), 0, 0, 0, 0]).T
+	Load = (np.array([np.cos(np.deg2rad(30)), np.sin(np.deg2rad(30)), 0, 0, 0, 0])*850).T
 	t = 0.125
 	Q3(LayUp, Load)
