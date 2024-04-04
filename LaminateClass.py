@@ -38,7 +38,7 @@ class Laminate():
 	"""
 	The laminate class will be used to do operations on the layup
 	"""
-	def __init__(self, LayUp: list, Lamina: Lamina):
+	def __init__(self, LayUp: list, Lamina: Lamina | list):
 		"""
 		Initializes the laminate class, this class takes in a layup and lamina
 		:param LayUp: A list of angles [deg] starting from the bottom ply
@@ -46,7 +46,12 @@ class Laminate():
 		:param t: The lamina thickness
 		"""
 		self.LayUp = LayUp
-		self.Lamina = Lamina
+		if type(Lamina) == list:
+			self.Lamina = Lamina
+			constantUD = False
+		elif type(Lamina) == Lamina:
+			self.Lamina = [Lamina]*len(LayUp)
+			constantUD = True
 		self.t = self.Lamina.t
 		self.h = self.t * len(LayUp)
 		self.zlst = np.linspace(-self.h / 2, self.h / 2, len(self.LayUp) + 1, endpoint = True)
@@ -59,11 +64,12 @@ class Laminate():
 		:return: None
 		"""
 		self.QGlobalAr = list(range(len(self.LayUp)))
-		Q11 = self.Lamina.QMatrix[0, 0]
-		Q12 = self.Lamina.QMatrix[0, 1]
-		Q22 = self.Lamina.QMatrix[1, 1]
-		Q66 = self.Lamina.QMatrix[2, 2]
+
 		for i, theta in enumerate(self.LayUp):
+			Q11 = self.Lamina[i].QMatrix[0, 0]
+			Q12 = self.Lamina[i].QMatrix[0, 1]
+			Q22 = self.Lamina[i].QMatrix[1, 1]
+			Q66 = self.Lamina[i].QMatrix[2, 2]
 			n = np.sin(np.deg2rad(theta))
 			m = np.cos(np.deg2rad(theta))
 			Qxx = Q11 * m ** 4 + 2 * (Q12 + 2 * Q66) * m ** 2 * n ** 2 + Q22 * n ** 4
@@ -128,7 +134,6 @@ class Laminate():
 		GloStresses = self.calcGloStresses(Load)
 		PlyStresses = np.zeros((3, len(self.LayUp)))
 		for k, theta in enumerate(self.LayUp):
-
 			PlyStresses[:, k] = StressGloTOPly(theta)@GloStresses[:, k]
 		return PlyStresses
 
@@ -186,6 +191,115 @@ class Laminate():
 			f_FFp = -N1/Xc
 
 		return f_FFp, f_IFFp	#  result of analysis, if f_p is below 1 lamina did not fail, if it is 1 or higher lamina has failed
+	def calcFailure(self, Load):
+		failure = np.zeros(4)
+		print("failure:", failure)
+		dn = 50000 # Load increment
+		lpf = False
+		LoadFPF = np.zeros_like(Load)
+		fpf = False
+		LoadLPF = np.zeros_like(Load)
+		Farg  = dn*10  # Initial length of load vector Ns-Ny
+		strength = []
+		for j in range(len(self.LayUp)):
+			strength.append([self.Lamina[j].Xt, self.Lamina[j].Xc, self.Lamina[j].Yt, self.Lamina[j].Yc, self.Lamina[j].S])
+		strength = np.asarray(strength, dtype=float)
+		strength = strength.reshape((-1, 5))
+		while lpf == False:
+			stresses = self.calcPlyStresses(Load)
+			f_xm = 0
+			f_ym = 0
+			f_sm = 0
+
+			#Apply max stress failure criteria
+			for j in range(0,len(self.LayUp)):   # Max stress Failure
+				print("ply:", self.LayUp[j])
+				print(f_xm, f_ym, f_sm)
+
+				print("Strength:", strength[j,:])
+				if stresses[0,j] > 0 and strength[j,0] != 0:
+					f_xm = stresses[0,j] / strength[j,0]#Xt_mean
+				elif stresses[0,j] < 0 and strength[j,0] != 0:
+					f_xm = stresses[0,j] / -strength[j,1]#Xc_mean
+
+				if stresses[1,j] > 0 and strength[j,0] != 0:
+					f_ym = stresses[1,j] / strength[j,2]#Yt_mean
+				elif stresses[1,j] < 0 and strength[j,0] != 0:
+					f_ym = stresses[1,j] / -strength[j,3]#Yc_mean
+				if stresses[2,j] > 0 and strength[j,0] != 0:
+					f_sm = stresses[2,j] / strength[j,4]#S_mean
+				elif stresses[2,j] < 0 and strength[j,0] != 0:
+					f_sm = stresses[2,j] / -strength[j,4]
+				print("Failure value")
+				print(f_xm,f_ym,f_sm)
+				# Determine which failure mode, and apply deg rule
+				if (f_xm >= 1 and failure[j] <= 1) or ((f_ym >= 1 or f_sm >= 1) and failure[j] == 1):
+					print("A")
+					failure[j] = failure[j] + 1
+					print("failure:", failure)
+					if fpf == False:
+						LoadFPF = Load
+						fpf = True
+						print("fpf")
+
+					if self.LayUp[j] == 45 or self.LayUp[j] == -45:
+						failure[j] = failure[j]-1
+						failure[2:4] = failure[2:4]+1
+						self.ABD[0:3,0:3] = self.ABD[0:3,0:3] - 8 * Q[j]*t
+						strength[2:4,:] = 0
+					else:
+						self.ABD[0:3, 0:3] = self.ABD[0:3, 0:3] - 4 * Q[j]*t
+						strength[j,:] = 0
+						print(strength[j])
+
+					if np.count_nonzero(failure) == 4:
+						LoadLPF = Load
+						lpf = True
+						print("Last ply failure!!")
+
+					break
+
+				elif (f_ym >= 1 or f_sm >= 1) and failure[j] == 0:
+					print("B")
+					failure[j] = failure[j] + 1
+					print("failure:", failure)
+					if fpf == False:
+						LoadFPF = Load
+						fpf = True
+						print("fpf")
+
+
+
+					if self.LayUp[j] == 45 or self.LayUp[j] == -45:
+						failure[j] = failure[j] - 1
+						failure[2:4] = failure[2:4] + 1
+						Q[j] = Laminate([45], Lamina(t, E1_mean, E2_mean*0.1, v12_mean, G12_mean)).QGlobalAr[0]
+						self.ABD[0:3,0:3] = self.ABD[0:3,0:3] - 8*self.QGlobalAr[j] * t + 8 * Q[j] * t
+						strength[2:4,2:4] = 0.1*strength[2:4,2:4]
+						print("failure update:",failure)
+					else:
+						# Degrade transverse elastic properties
+						t, E1, E2, v12, G12 = self.Lamina[j].t, self.Lamina[j].E1, self.Lamina[j].E2, self.Lamina[j].v12, self.Lamina[j].G12
+						self.Lamina[j] = Lamina(t, E1, E2*0.1, v12, G12)
+						self.calcQGlobalLaminas()
+						self.calcABD()
+
+						strength[j,2:4] = 0.1*strength[j,2:4]
+						print(strength[j,:])
+
+					if np.count_nonzero(failure) == 4:
+						LoadLPF = Load
+						lpf = True
+						print("Last ply failure!!")
+
+					break
+				# When no failure detected, continue to next ply and increase
+				elif j == 3:
+					print("C")
+					Farg = Farg + dn
+					print("Force:", Farg)
+					print("Failures:", failure)
+				#lpf = True
 
 	def __repr__(self):
 		return f"Laminate of layup {self.LayUp}"

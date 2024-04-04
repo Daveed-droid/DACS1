@@ -26,3 +26,12 @@ S_std = 6.21e6  # Pa
 
 Lamina_mean = Lamina(t, E1_mean, E2_mean, v12_mean, G12_mean)
 Ply_strength = [Xt_mean,Xc_mean,Yt_mean,Yc_mean,S_mean]
+Lamina_props = np.array([[E1_mean, E1_std],
+						 [E2_mean, E2_std],
+						 [v12_mean, v12_std],
+						 [G12_mean, G12_std],
+						 [Xt_mean, Xt_std],
+						 [Xc_mean, 0],
+						 [Yt_mean, Yt_std],
+						 [Yc_mean, 0],
+						 [S_mean, S_std]])
