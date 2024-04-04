@@ -11,7 +11,7 @@ from LaminateClass import Laminate
 import matplotlib.pyplot as plt
 
 
-def Q3(n = 1000, Load, LayUp):
+def Q3(LayUp, Load, n = 1000):
 	LPF = []
 	for n in range(n):
 		# Random pick
@@ -20,8 +20,13 @@ def Q3(n = 1000, Load, LayUp):
 			props.append(np.random.normal(mean, std))
 		E1, E2, v12, G12 = props[0:4]
 		Lamina_ = Lamina(t, E1, E2, v12, G12)
+		Xt, Yt, Xc, Yc, S = props[4:9]
+		Lamina_.setStrengths(Xt, Yt, Xc, Yc, S)
 		Laminate_ = Laminate(LayUp, Lamina_)
-		LPF.append(calcLPF(Load))
+		LoadFPF, LoadLPF = Laminate_.calcFailure(Load)
+		LoadNorm = np.linalg.norm(Load)
+		LoadFPFNorm = np.linalg.norm(LoadFPF)
+		LPF.append(LoadFPFNorm/LoadNorm)
 	plt.hist(LPF)
 
 
@@ -32,3 +37,4 @@ if __name__ == '__main__':
 	LayUp = np.append(LayUp, np.flip(LayUp))
 	Load = np.array([np.cos(np.deg2rad(30)), np.sin(np.deg2rad(30)), 0, 0, 0, 0]).T
 	t = 0.125
+	Q3(LayUp, Load)

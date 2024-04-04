@@ -49,11 +49,12 @@ class Laminate():
 		if type(Lamina) == list:
 			self.Lamina = Lamina
 			constantUD = False
-		elif type(Lamina) == Lamina:
+		else:
 			self.Lamina = [Lamina]*len(LayUp)
+			self.t = [self.Lamina[i].t for i in range(len(LayUp))]
 			constantUD = True
-		self.t = self.Lamina.t
-		self.h = self.t * len(LayUp)
+		self.h = np.sum(self.t)
+		# TODO: Make zlist allow varying t
 		self.zlst = np.linspace(-self.h / 2, self.h / 2, len(self.LayUp) + 1, endpoint = True)
 		self.calcQGlobalLaminas()
 		self.calcABD()
@@ -192,7 +193,7 @@ class Laminate():
 
 		return f_FFp, f_IFFp	#  result of analysis, if f_p is below 1 lamina did not fail, if it is 1 or higher lamina has failed
 	def calcFailure(self, Load):
-		failure = np.zeros(4)
+		failure = np.zeros(len(self.LayUp))
 		print("failure:", failure)
 		dn = 50000 # Load increment
 		lpf = False
@@ -242,17 +243,11 @@ class Laminate():
 						fpf = True
 						print("fpf")
 
-					if self.LayUp[j] == 45 or self.LayUp[j] == -45:
-						failure[j] = failure[j]-1
-						failure[2:4] = failure[2:4]+1
-						self.ABD[0:3,0:3] = self.ABD[0:3,0:3] - 8 * Q[j]*t
-						strength[2:4,:] = 0
-					else:
-						self.ABD[0:3, 0:3] = self.ABD[0:3, 0:3] - 4 * Q[j]*t
-						strength[j,:] = 0
-						print(strength[j])
+					self.Lamina[j] = Lamina(self.Lamina[j].t, 0, 0, 0, 0)
+					self.calcQGlobalLaminas()
+					self.calcABD()
 
-					if np.count_nonzero(failure) == 4:
+					if np.count_nonzero(failure) == len(self.LayUp):
 						LoadLPF = Load
 						lpf = True
 						print("Last ply failure!!")
@@ -267,25 +262,14 @@ class Laminate():
 						LoadFPF = Load
 						fpf = True
 						print("fpf")
-
-
-
-					if self.LayUp[j] == 45 or self.LayUp[j] == -45:
-						failure[j] = failure[j] - 1
-						failure[2:4] = failure[2:4] + 1
-						Q[j] = Laminate([45], Lamina(t, E1_mean, E2_mean*0.1, v12_mean, G12_mean)).QGlobalAr[0]
-						self.ABD[0:3,0:3] = self.ABD[0:3,0:3] - 8*self.QGlobalAr[j] * t + 8 * Q[j] * t
-						strength[2:4,2:4] = 0.1*strength[2:4,2:4]
-						print("failure update:",failure)
-					else:
-						# Degrade transverse elastic properties
-						t, E1, E2, v12, G12 = self.Lamina[j].t, self.Lamina[j].E1, self.Lamina[j].E2, self.Lamina[j].v12, self.Lamina[j].G12
-						self.Lamina[j] = Lamina(t, E1, E2*0.1, v12, G12)
-						self.calcQGlobalLaminas()
-						self.calcABD()
-
-						strength[j,2:4] = 0.1*strength[j,2:4]
-						print(strength[j,:])
+					# Degrade transverse elastic properties
+					t, E1, E2, v12, G12 = self.Lamina[j].t, self.Lamina[j].E1, self.Lamina[j].E2, self.Lamina[j].v12, self.Lamina[j].G12
+					self.Lamina[j] = Lamina(t, E1, E2*0.1, v12, G12)
+					self.calcQGlobalLaminas()
+					self.calcABD()
+					# Degrade strengths
+					strength[j,2:4] = 0.1*strength[j,2:4]
+					print(strength[j,:])
 
 					if np.count_nonzero(failure) == 4:
 						LoadLPF = Load
@@ -294,12 +278,12 @@ class Laminate():
 
 					break
 				# When no failure detected, continue to next ply and increase
-				elif j == 3:
+				elif j == len(self.LayUp):
 					print("C")
 					Farg = Farg + dn
 					print("Force:", Farg)
 					print("Failures:", failure)
-				#lpf = True
+		return LoadFPF, LoadLPF
 
 	def __repr__(self):
 		return f"Laminate of layup {self.LayUp}"

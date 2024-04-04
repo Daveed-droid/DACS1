@@ -5,6 +5,7 @@
 @Date ：25/03/2024 15:43
 """
 from LaminaClass import Lamina
+import numpy as np
 
 t = 0.125e-3  # mm
 E1_mean = 145.3e9  # Pa
