@@ -17,7 +17,7 @@ def Q2a(Lamina_mean = Lamina_mean, Laminate = Laminate):
     LayUp = np.append(LayUp, np.flip(LayUp))
     LayUp = np.append(LayUp, np.flip(LayUp))
     #LayUp = np.array([0,45,-45,90,90,-45,45,0]) # Test to compare to lecture
-    angle = np.arange(0,180,10)
+    angle = np.arange(0,181,10)
     print(angle)
     sig = np.array([Xt_mean,Xc_mean,Yt_mean,Yc_mean,S_mean])
     strength = np.array([sig,sig,sig,sig])
@@ -27,7 +27,7 @@ def Q2a(Lamina_mean = Lamina_mean, Laminate = Laminate):
     for i in range(0,len(angle)):
         failure = np.zeros(4)
         print("failure:", failure)
-        dn = 50000 # Load increment
+        dn = 5000 # Load increment
         lpf = False
         fpf = False
         Farg  = dn*10  # Initial length of load vector Ns-Ny
