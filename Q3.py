@@ -9,11 +9,12 @@ from AssignmentData import Lamina_props
 from LaminaClass import Lamina
 from LaminateClass import Laminate
 import matplotlib.pyplot as plt
+from tqdm import tqdm
 
 
-def Q3(LayUp, Load, n = 10):
+def Q3(LayUp, Load, n = 10000):
 	LPF = []
-	for n in range(n):
+	for n_i in tqdm(range(n)):
 		LaminaLst=[]
 		for i in range(len(LayUp)):
 			# Random pick
@@ -26,7 +27,7 @@ def Q3(LayUp, Load, n = 10):
 			Lamina_.setStrengths(Xt, Yt, Xc, Yc, S)
 			LaminaLst.append(Lamina_)
 		Laminate_ = Laminate(LayUp, LaminaLst)
-		LoadFPF, LoadLPF = Laminate_.calcFailure(Load)
+		LoadFPF, LoadLPF = Laminate_.calcFailure(Load, dL_step = 20000)
 		LoadNorm = np.linalg.norm(Load)
 		LoadFPFNorm = np.linalg.norm(LoadFPF)
 		LPF.append(LoadFPFNorm/LoadNorm)
@@ -40,5 +41,6 @@ if __name__ == '__main__':
 	LayUp = np.append(LayUp, np.flip(LayUp))
 	LayUp = np.append(LayUp, np.flip(LayUp))
 	Load = (np.array([np.cos(np.deg2rad(30)), np.sin(np.deg2rad(30)), 0, 0, 0, 0])*850).T
-	t = 0.125
+	Load = Load*1000 # Convert to N/m
+	t = 0.125e-3
 	Q3(LayUp, Load)

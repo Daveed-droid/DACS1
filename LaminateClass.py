@@ -196,7 +196,7 @@ class Laminate():
 
 		return f_FFp, f_IFFp	#  result of analysis, if f_p is below 1 lamina did not fail, if it is 1 or higher lamina has failed
 	def calcFailure(self, Load, dL_step = 5000):
-		failure = np.zeros(len(self.LayUp))
+		failure = np.zeros(len(self.LayUp), dtype = int)
 		lpf = False
 		LoadFPF = np.zeros_like(Load)
 		fpf = False
@@ -233,9 +233,8 @@ class Laminate():
 
 				# Determine which failure mode, and apply deg rule
 				if (f_xm >= 1 and failure[j] <= 1) or ((f_ym >= 1 or f_sm >= 1) and failure[j] == 1):
-					print("A")
 					failure[j] = failure[j] + 1
-					if fpf == False:
+					if fpf == False and np.sum(failure)>=1:
 						LoadFPF = Load
 						fpf = True
 
@@ -251,7 +250,7 @@ class Laminate():
 
 				elif (f_ym >= 1 or f_sm >= 1) and failure[j] == 0:
 					failure[j] = failure[j] + 1
-					if fpf == False:
+					if fpf == False and np.sum(failure)>=1:
 						LoadFPF = Load
 						fpf = True
 					# Degrade transverse elastic properties
@@ -261,9 +260,8 @@ class Laminate():
 					self.calcABD()
 					# Degrade strengths
 					strength[j,2:4] = 0.1*strength[j,2:4]
-					print(strength[j,:])
 
-					if np.count_nonzero(failure) == 4:
+					if np.count_nonzero(failure) == len(self.LayUp):
 						LoadLPF = Load
 						lpf = True
 
@@ -271,7 +269,6 @@ class Laminate():
 				# When no failure detected, continue to next ply and increase
 				elif j == len(self.LayUp)-1:
 					Load = Load + dL
-					print("Added Load")
 		return LoadFPF, LoadLPF
 
 	def __repr__(self):
@@ -303,7 +300,12 @@ if __name__ == "__main__":
 	assert np.isclose(Ex, Ey)
 	from AssignmentData import Xt_mean, Yt_mean, Xc_mean, Yc_mean, S_mean
 	Lamina_.setStrengths(Xt_mean, Yt_mean, Xc_mean, Yc_mean, S_mean)
-	Laminate_3 = Laminate([15, 0, 0, 75], Lamina_)
 
-	Laminate_3.calcFailure((np.array([np.cos(np.deg2rad(30)), np.sin(np.deg2rad(30)), 0, 0, 0, 0])*850).T)
-	print(vxy)
+	LayUp = np.array([0, 90, 45, -45])
+	LayUp = np.append(LayUp, np.flip(LayUp))
+	LayUp = np.append(LayUp, np.flip(LayUp))
+	Laminate_3 = Laminate(LayUp, Lamina_)
+
+	LoadFPF, LoadLPF = Laminate_3.calcFailure((np.array([np.cos(np.deg2rad(30)), np.sin(np.deg2rad(30)), 0, 0, 0, 0])*850).T)
+	print("FPF", LoadFPF)
+	print("LPF", LoadLPF)
