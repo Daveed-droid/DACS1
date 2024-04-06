@@ -29,7 +29,7 @@ def Q3(LayUp, Load, n = 100):
             Lamina_.setStrengths(Xt, Yt, Xc, Yc, S)
             LaminaLst.append(Lamina_)
         Laminate_ = Laminate(LayUp, LaminaLst)
-        LoadFPF= Laminate_.calcFailurePuck(Load, dL_step = 5000)
+        LoadFPF= Laminate_.calcFailurePuck(Load, dL_step = 2000)
         LoadNorm = np.linalg.norm(Load)
         LoadFPFNorm = np.linalg.norm(LoadFPF)
         FPF.append(LoadFPFNorm/LoadNorm)

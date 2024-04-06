@@ -178,41 +178,34 @@ class Laminate():
 		pass
 
 
-	def Puck(self, Stress, Strength):		# Strength is list of ply properties: [Xt_mean,Xc_mean,Yt_mean,Yc_mean,S_mean]
-
+	def Puck(self, Load):		# Strength is list of ply properties: [Xt_mean,Xc_mean,Yt_mean,Yc_mean,S_mean]
+		Stress = self.calcPlyStresses(Load)
 		pt12 = 0.3
 		pc12 = 0.25
 		pc11 = 0.225
-		Xt = Strength[0]
-		Xc = Strength[1]
-		Yt = Strength[2]
-		Yc = Strength[3]
-		S = Strength[4]
-		#Force = np.array([Load[0], Load[1], Load[2], 0, 0, 0]).T
-		#stresses = self.calcPlyStresses(Force)
-		N1 = Stress[0]
-		N2 = Stress[1]
-		N12 = Stress[2]
+		Xt = np.asarray([self.Lamina[k].Xt for k in range(len(self.LayUp))])
+		Xc = np.asarray([self.Lamina[k].Xc for k in range(len(self.LayUp))])
+		Yt = np.asarray([self.Lamina[k].Yt for k in range(len(self.LayUp))])
+		Yc = np.asarray([self.Lamina[k].Yc for k in range(len(self.LayUp))])
+		S = np.asarray([self.Lamina[k].S for k in range(len(self.LayUp))])
+		N1 = Stress[0, :].T
+		N2 = Stress[1, :].T
+		N12 = Stress[2, :].T
 		N12c = S*(1+2*pc11)**0.5
 
 		Ra = pc11*S/pc12
-		if N2 >= 0:	#Mode A
-			print("modeA")
-			f_IFFp = (((1/Yt-pt12/S)*N2)**2+(N12/S)**2)**0.5+pt12*N2/S
-		elif abs(N2/N12) <= abs(Ra/N12c):#Mode B
-			print("modeB")
-			f_IFFp = ((N12/S)**2+(pc12*N2/S)**2)**0.5+pc12*N2/S
-		else:#Mode C
-			print("modeC")
-			f_IFFp = ((N12/(2*(1+pc11)*S))**2+(N2/Yc)**2)*Yc/-N2
-		if N1 >= 0: #FF tension
-			print("modeD")
-			f_FFp = N1/Xt
-		else: #FF compression
-			print("modeE")
-			f_FFp = -N1/Xc
-
+		f_FFp, f_IFFp = np.zeros_like(Xt), np.zeros_like(Xt)
+		# Mode C
+		f_IFFp = ((N12/(2*(1+pc11)*S))**2+(N2/Yc)**2)*Yc/-N2
+		mask = np.positive(N2/N12)<=np.positive(Ra/N12c) # Mode B
+		f_IFFp[mask] = ((N12[mask]/S[mask])**2+(pc12*N2[mask]/S[mask])**2)**0.5+pc12*N2[mask]/S[mask]
+		mask = N2>=0 # Mode A
+		f_IFFp[mask] = (((1/Yt[mask]-pt12/S[mask])*N2[mask])**2+(N12[mask]/S[mask])**2)**0.5+pt12*N2[mask]/S[mask]
+		f_FFp = -N1/Xc
+		mask = N1>=0 # FF Tension
+		f_FFp[mask] = N1[mask]/Xt[mask]
 		return f_FFp, f_IFFp	#  result of analysis, if f_p is below 1 lamina did not fail, if it is 1 or higher lamina has failed
+
 	def calcFailure(self, Load, dL_step = 5000):
 		failure = np.zeros(len(self.LayUp), dtype = int)
 		lpf = False
@@ -294,12 +287,10 @@ class Laminate():
 		dL = Load*dL_step/np.linalg.norm(Load)
 
 		while not Failed:
-			for k in range(len(self.LayUp)):
-				f_FFp, f_IFFp = self.Puck(Load)
-				if (f_FFp > 1) or (f_IFFp > 1):
-					Failed = True
-					FailLoad = LoadI
-					break
+			f_FFp, f_IFFp = self.Puck(LoadI)
+			if np.any(f_FFp > 1) or np.any(f_IFFp > 1):
+				Failed = True
+				FailLoad = LoadI
 			LoadI += dL
 		return FailLoad
 	def __repr__(self):
