@@ -29,15 +29,15 @@ def Q3(LayUp, Load, n = 100):
             Lamina_.setStrengths(Xt, Yt, Xc, Yc, S)
             LaminaLst.append(Lamina_)
         Laminate_ = Laminate(LayUp, LaminaLst)
-        LoadFPF, LoadLPF = Laminate_.calcFailure(Load, dL_step = 5000)
+        LoadFPF= Laminate_.calcFailurePuck(Load, dL_step = 5000)
         LoadNorm = np.linalg.norm(Load)
         LoadFPFNorm = np.linalg.norm(LoadFPF)
         FPF.append(LoadFPFNorm/LoadNorm)
-    with open(f'Q3_DataAnalysis/Data/reliability_analysis_n{n}_FPF.pkl', 'wb') as f:  # open a text file
+    with open(f'Q3_DataAnalysis/Data/reliability_analysis_Load{round(np.linalg.norm(Load), 0)}_n{n}_FPF.pkl', 'wb') as f:  # open a text file
         pickle.dump(FPF, f) # serialize the list
     f.close()
     (mean, std) = norm.fit(FPF)
-    with open(f'Q3_DataAnalysis/Data/reliability_analysis_n{n}_meanStd.pkl', 'wb') as f:  # open a text file
+    with open(f'Q3_DataAnalysis/Data/reliability_analysis_Load{round(np.linalg.norm(Load), 0)}_n{n}_meanStd.pkl', 'wb') as f:  # open a text file
         pickle.dump([mean, std], f) # serialize the list
     f.close()
     x = np.linspace(mean - 8*std, mean + 8*std, 100)
@@ -57,15 +57,15 @@ if __name__ == '__main__':
     Load = (np.array([np.cos(np.deg2rad(30)), np.sin(np.deg2rad(30)), 0, 0, 0, 0])*1200).T
     Load = Load*1000 # Convert to N/m
     t = 0.125e-3
-    print(Load)
-    #Q3(LayUp, Load, n=102400)
-    #Q3(LayUp, Load, n=51200)
-    #Q3(LayUp, Load, n=25600)
-    #Q3(LayUp, Load, n=12800)
-    #Q3(LayUp, Load, n=6400)
-    #Q3(LayUp, Load, n=3200)
-    #Q3(LayUp, Load, n=1600)
-    #Q3(LayUp, Load, n=800)
-    #Q3(LayUp, Load, n=400)
-    #Q3(LayUp, Load, n=200)
-    #Q3(LayUp, Load, n=100)
+    print(np.linalg.norm(Load))
+    # Q3(LayUp, Load, n=102400)
+    # Q3(LayUp, Load, n=51200)
+    # Q3(LayUp, Load, n=25600)
+    # Q3(LayUp, Load, n=12800)
+    # Q3(LayUp, Load, n=6400)
+    # Q3(LayUp, Load, n=3200)
+    # Q3(LayUp, Load, n=1600)
+    Q3(LayUp, Load, n=800)
+    # Q3(LayUp, Load, n=400)
+    # Q3(LayUp, Load, n=200)
+    # Q3(LayUp, Load, n=100)

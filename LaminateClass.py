@@ -270,7 +270,20 @@ class Laminate():
 				elif j == len(self.LayUp)-1:
 					Load = Load + dL
 		return LoadFPF, LoadLPF
+	def calcFailurePuck(self, Load, dL_step=5000):
+		Failed = False
+		LoadI = np.zeros_like(Load)
+		dL = Load*dL_step/np.linalg.norm(Load)
 
+		while not Failed:
+			for k in range(len(self.LayUp)):
+				f_FFp, f_IFFp = self.Puck(Load)
+				if (f_FFp > 1) or (f_IFFp > 1):
+					Failed = True
+					FailLoad = LoadI
+					break
+			LoadI += dL
+		return FailLoad
 	def __repr__(self):
 		return f"Laminate of layup {self.LayUp}"
 
