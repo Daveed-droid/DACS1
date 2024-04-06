@@ -83,6 +83,7 @@ class Laminate():
 									[Qxy, Qyy, Qys],
 									[Qxs, Qys, Qss]])
 			self.QGlobalAr[i] = QMatrix_glo
+
 	def calcABD(self):
 		"""
 		Calculates the ABD matrix of the laminate
@@ -144,6 +145,18 @@ class Laminate():
 		for k in range(len(self.LayUp)):
 			plyStresses[:, k] = self.QGlobalAr[k] @ plyStrains[:, k]
 		return plyStresses
+
+	def calcPlyStresses2(self,Load):
+		strain = self.calcPlyStrains(Load)
+		plyStrain = np.zeros([3,len(self.LayUp)])
+		plyStresses = np.zeros([3,len(self.LayUp)])
+		for k in range(0,4):
+
+			plyStrain[:,k] = np.matmul(StrainGloTOPly(self.LayUp[k]), strain[:,k])
+			plyStresses[:,k] = np.matmul(self.Lamina[k].QMatrix, plyStrain[:,k])
+
+		return plyStresses
+
 	def calcEngConst(self):
 		"""
 		Calculates the engineering constants of the laminate
@@ -164,7 +177,8 @@ class Laminate():
 	def calcStressEnvelope(self):
 		pass
 
-	def Puck(self, Load, Strength):		# Strength is list of ply properties: [Xt_mean,Xc_mean,Yt_mean,Yc_mean,S_mean]
+
+	def Puck(self, Stress, Strength):		# Strength is list of ply properties: [Xt_mean,Xc_mean,Yt_mean,Yc_mean,S_mean]
 
 		pt12 = 0.3
 		pc12 = 0.25
@@ -174,24 +188,28 @@ class Laminate():
 		Yt = Strength[2]
 		Yc = Strength[3]
 		S = Strength[4]
-		Force = np.array([Load[0], Load[1], Load[2], 0, 0, 0]).T
-		stresses = self.calcPlyStresses(Force)
-		N1 = stresses[0]
-		N2 = stresses[1]
-		N12 = stresses[2]
+		#Force = np.array([Load[0], Load[1], Load[2], 0, 0, 0]).T
+		#stresses = self.calcPlyStresses(Force)
+		N1 = Stress[0]
+		N2 = Stress[1]
+		N12 = Stress[2]
 		N12c = S*(1+2*pc11)**0.5
 
 		Ra = pc11*S/pc12
 		if N2 >= 0:	#Mode A
-
-			f_IFFp = (((1/Yt-pt12/S)*N2)**2+(N12/S)**2)**0.5+pt12*S/N2
+			print("modeA")
+			f_IFFp = (((1/Yt-pt12/S)*N2)**2+(N12/S)**2)**0.5+pt12*N2/S
 		elif abs(N2/N12) <= abs(Ra/N12c):#Mode B
+			print("modeB")
 			f_IFFp = ((N12/S)**2+(pc12*N2/S)**2)**0.5+pc12*N2/S
 		else:#Mode C
+			print("modeC")
 			f_IFFp = ((N12/(2*(1+pc11)*S))**2+(N2/Yc)**2)*Yc/-N2
 		if N1 >= 0: #FF tension
+			print("modeD")
 			f_FFp = N1/Xt
 		else: #FF compression
+			print("modeE")
 			f_FFp = -N1/Xc
 
 		return f_FFp, f_IFFp	#  result of analysis, if f_p is below 1 lamina did not fail, if it is 1 or higher lamina has failed
