@@ -18,7 +18,7 @@ def Q2a(Lamina_mean = Lamina_mean, Laminate = Laminate):
     LayUp = np.append(LayUp, np.flip(LayUp))
     LayUp = np.append(LayUp, np.flip(LayUp))
     #LayUp = np.array([0,45,-45,90,90,-45,45,0]) # Test to compare to lecture
-    angle = np.arange(5,180,5)
+    angle = np.arange(0,361,10)
     print(angle)
     sig = np.array([Xt_mean,Xc_mean,Yt_mean,Yc_mean,S_mean])
     strength = np.array([sig,sig,sig,sig])
@@ -222,7 +222,7 @@ def Q2a(Lamina_mean = Lamina_mean, Laminate = Laminate):
 
                 print("Failure value")
                 print(f_FF, f_IFF)
-                f_FF=0
+
                 if (f_FF-1 >= 0.01 or f_IFF-1 >= 0.01) and fpf == False:
 
                     Farg = Farg - dn
