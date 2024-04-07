@@ -125,7 +125,8 @@ class Laminate():
 	def calcGloStrains(self, Load):
 		FlatStrains = np.linalg.inv(self.ABD)@Load
 		GloStrains = np.zeros((3, len(self.LayUp)))
-		zAvg = [self.zlst[k + 1] + self.zlst[k] for k in range(len(self.zlst) - 1)]
+		zAvg = [(self.zlst[k + 1] + self.zlst[k])/2 for k in range(len(self.zlst) - 1)]
+		print(f"Z Avg: {zAvg}")
 		for k in range(len(self.LayUp)):
 			GloStrains[:, k] = (FlatStrains[0:3] + zAvg[k] * FlatStrains[3:6]).T
 		return GloStrains
@@ -133,18 +134,18 @@ class Laminate():
 
 
 	def calcPlyStresses(self, Load):
-		GloStresses = self.calcGloStresses(Load)
-		PlyStresses = np.zeros((3, len(self.LayUp)))
+		gloStresses = self.calcGloStresses(Load)
+		plyStresses = np.zeros((3, len(self.LayUp)))
 		for k, theta in enumerate(self.LayUp):
-			PlyStresses[:, k] = StressGloTOPly(theta)@GloStresses[:, k]
-		return PlyStresses
+			plyStresses[:, k] = StressGloTOPly(theta)@gloStresses[:, k]
+		return plyStresses
 
 	def calcGloStresses(self, Load):
-		plyStrains = self.calcPlyStrains(Load)
-		plyStresses = np.zeros((3, len(self.LayUp)))
+		gloStrains = self.calcGloStrains(Load)
+		gloStresses = np.zeros((3, len(self.LayUp)))
 		for k in range(len(self.LayUp)):
-			plyStresses[:, k] = self.QGlobalAr[k] @ plyStrains[:, k]
-		return plyStresses
+			gloStresses[:, k] = self.QGlobalAr[k] @ gloStrains[:, k]
+		return gloStresses
 
 	def calcPlyStresses2(self,Load):
 		strain = self.calcPlyStrains(Load)
@@ -281,7 +282,7 @@ class Laminate():
 				elif j == len(self.LayUp)-1:
 					Load = Load + dL
 		return LoadFPF, LoadLPF
-	def calcFailurePuck(self, Load, dL_step=5000):
+	def calcFailurePuck(self, Load, dL_step=100000):
 		Failed = False
 		LoadI = np.zeros_like(Load)
 		dL = Load*dL_step/np.linalg.norm(Load)
@@ -289,6 +290,11 @@ class Laminate():
 		while not Failed:
 			f_FFp, f_IFFp = self.Puck(LoadI)
 			if np.any(f_FFp > 1) or np.any(f_IFFp > 1):
+				a = np.max([np.max(f_FFp), np.max(f_IFFp)])
+				while not np.isclose(a, 1, atol=0.01):
+					LoadI = LoadI/a
+					f_FFp, f_IFFp = self.Puck(LoadI)
+					a = np.max([np.max(f_FFp), np.max(f_IFFp)])
 				Failed = True
 				FailLoad = LoadI
 			LoadI += dL
