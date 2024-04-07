@@ -6,7 +6,6 @@
 """
 from LaminaClass import Lamina
 import numpy as np
-import numpy as np
 t = 0.125e-3  # m
 E1_mean = 145.3e9  # Pa
 E1_std = 3.28e9  # Pa

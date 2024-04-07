@@ -37,8 +37,8 @@ def plotStresses(Laminate, stresses, stressi):
 	plt.xlim([min-0.2*rangei, max+0.05*rangei])
 	plt.xlabel("Stress [MPa]")
 	plt.ylabel("Position From Midline [mm]")
-	plt.show()
 	plt.savefig(f"Plots/Q1b/stress{stressi}")
+	plt.show()
 
 def plotStrains(Laminate, strains, straini):
 	title = {
@@ -68,8 +68,8 @@ def plotStrains(Laminate, strains, straini):
 	plt.xlim([min-0.2*rangei, max+0.05*rangei])
 	plt.xlabel("Strains [-]")
 	plt.ylabel("Position From Midline [mm]")
-	plt.show()
 	plt.savefig(f"Plots/Q1b/strain{straini}")
+	plt.show()
 
 
 def Q1b(Lamina_mean = Lamina_mean, Laminate = Laminate):

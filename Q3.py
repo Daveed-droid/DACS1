@@ -60,25 +60,25 @@ if __name__ == '__main__':
     t = 0.125e-3
     # Q3(LayUp, Load, n=800000) # ~ 2 hr
     # Q3(LayUp, Load, n=400000) # ~ 1 hr
-    # Q3(LayUp, Load, n=200000) # ~ 30 min
+    Q3(LayUp, Load, n=200000) # ~ 30 min
     # Q3(LayUp, Load, n=100000) # ~ 14 min
     # Q3(LayUp, Load, n=50000) # ~ 7 min
     # Q3(LayUp, Load, n=25000) # ~ 3 min
     # Q3(LayUp, Load, n=12500) # ~ 1 min
-    n_start = 1000
-    meanB = 0
-    stdB = 0
-    PfB = 1
-    n = n_start
-    mean, std, Pf = Q3(LayUp, Load, n=n)
-    while not (np.isclose(meanB, mean, rtol = 0.01) and np.isclose(stdB, std, rtol = 0.01) and np.isclose(PfB, Pf, rtol = 0.01)):
-        meanB = mean
-        stdB = std
-        PfB = Pf
-        n = n*2
-        mean, std, Pf = Q3(LayUp, Load, n=n)
-        print(f"Pf B {PfB} Pf {Pf}")
-        print(np.isclose(PfB, Pf, rtol = 0.01))
+    # n_start = 1000
+    # meanB = 0
+    # stdB = 0
+    # PfB = 1
+    # n = n_start
+    # mean, std, Pf = Q3(LayUp, Load, n=n)
+    # while not (np.isclose(meanB, mean, rtol = 0.01) and np.isclose(stdB, std, rtol = 0.01) and np.isclose(PfB, Pf, rtol = 0.01)):
+    #     meanB = mean
+    #     stdB = std
+    #     PfB = Pf
+    #     n = n*2
+    #     mean, std, Pf = Q3(LayUp, Load, n=n)
+    #     print(f"Pf B {PfB} Pf {Pf}")
+    #     print(np.isclose(PfB, Pf, rtol = 0.01))
 
     Load = (np.array([np.cos(np.deg2rad(30)), np.sin(np.deg2rad(30)), 0, 0, 0, 0])*850).T
     Load = Load*1000 # Convert to N/m

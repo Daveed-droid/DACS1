@@ -126,7 +126,6 @@ class Laminate():
 		FlatStrains = np.linalg.inv(self.ABD)@Load
 		GloStrains = np.zeros((3, len(self.LayUp)))
 		zAvg = [(self.zlst[k + 1] + self.zlst[k])/2 for k in range(len(self.zlst) - 1)]
-		print(f"Z Avg: {zAvg}")
 		for k in range(len(self.LayUp)):
 			GloStrains[:, k] = (FlatStrains[0:3] + zAvg[k] * FlatStrains[3:6]).T
 		return GloStrains
@@ -282,7 +281,7 @@ class Laminate():
 				elif j == len(self.LayUp)-1:
 					Load = Load + dL
 		return LoadFPF, LoadLPF
-	def calcFailurePuck(self, Load, dL_step=100000):
+	def calcFailurePuck(self, Load, dL_step=100000000):
 		Failed = False
 		LoadI = np.zeros_like(Load)
 		dL = Load*dL_step/np.linalg.norm(Load)
@@ -297,6 +296,7 @@ class Laminate():
 					a = np.max([np.max(f_FFp), np.max(f_IFFp)])
 				Failed = True
 				FailLoad = LoadI
+				break
 			LoadI += dL
 		return FailLoad
 	def __repr__(self):
