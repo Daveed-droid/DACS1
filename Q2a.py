@@ -18,7 +18,7 @@ def Q2a(Lamina_mean = Lamina_mean, Laminate = Laminate):
     LayUp = np.append(LayUp, np.flip(LayUp))
     LayUp = np.append(LayUp, np.flip(LayUp))
     #LayUp = np.array([0,45,-45,90,90,-45,45,0]) # Test to compare to lecture
-    angle = np.arange(5,180,5)
+    angle = np.arange(0,361,10)
     print(angle)
     sig = np.array([Xt_mean,Xc_mean,Yt_mean,Yc_mean,S_mean])
     strength = np.array([sig,sig,sig,sig])
@@ -159,7 +159,9 @@ def Q2a(Lamina_mean = Lamina_mean, Laminate = Laminate):
                     print("Failures:", failure)
                 #lpf = True
 
-        
+
+
+
 
 
 
@@ -173,57 +175,47 @@ def Q2a(Lamina_mean = Lamina_mean, Laminate = Laminate):
         dn = D
         Farg = dn# * 10
         Ns = Farg * np.sin(np.deg2rad(angle[i]))
-        print("Ns", Ns)
+
         Ny = Farg * np.cos(np.deg2rad(angle[i]))
-        print("Ny", Ny)
+
         plys = Laminate(LayUp, Lamina_mean)
         strength = np.array([sig, sig, sig, sig])
         # stresses = plys.calcPlyStresses(Load)
-        # print("ABD", plys.ABD)
+
         Qxyz = np.array([plys.QGlobalAr[0], plys.QGlobalAr[1], plys.QGlobalAr[2], plys.QGlobalAr[3]])
         Q123 = np.array([Lamina_mean.calcQMatrix(), Lamina_mean.calcQMatrix(), Lamina_mean.calcQMatrix(), Lamina_mean.calcQMatrix()])
         while lpf == False:
             Ns = Farg * np.sin(np.deg2rad(angle[i]))
-            #print("Ns", Ns)
+
             Ny = Farg * np.cos(np.deg2rad(angle[i]))
-            #print("Ny", Ny)
-            print(Farg)
+
             Load = np.array([0, Ny, Ns, 0, 0, 0]).T
             # Load = np.array([Farg, 0, 0, 0, 0, 0]).T    #Test
-            stresses = plys.calcPlyStresses2(Load)
-            
-            #print("poission:", plys.calcEngConst()[2])
+            #stresses = plys.calcPlyStresses2(Load)
             #print("inverse ABD:", np.linalg.inv(plys.ABD[0:3, 0:3]))
             #print("stress:", stresses[:, 0:4])
-            print("angle:", angle[i])
-            #print("test")
-            f_FF = 0
-            f_IFF = 0
+            # f_FF = 0
+            # f_IFF = 0
             # Apply max stress failure criteria
-
+            Lamina_mean.setStrengths(Xt_mean, Yt_mean, Xc_mean, Yc_mean, S_mean)
+            f_FF, f_IFF = plys.Puck(Load)
             for j in range(0, 4):  # Max stress Failure
-
                 if failure[j] == 2:
-                    f_FF = 0
-                    f_IFF = 0
+                    f_FF[j] = 0
+                    f_IFF[j] = 0
                     if j == 3:
-                        print("C")
+                        # print("C")
                         Farg = Farg + dn
-                        print("Force:", Farg)
-                        print("Failures:", failure)
+                        # print("Force:", Farg)
+                        # print("Failures:", failure)
                     continue
-                print("ply:", LayUp[j])
 
-                #print("Strength:", strength[j, :])
                 #Puck criteria
-                f_FF,f_IFF = plys.Puck(stresses[0:3,j], Ply_strength)
+                # f_FF,f_IFF = plys.Puck(stresses[0:3,j], Ply_strength)
                 #f_IFF = plys.Puck(stresses[0:3,j], Ply_strength)[1]
 
 
-                print("Failure value")
-                print(f_FF, f_IFF)
-                f_FF=0
-                if (f_FF-1 >= 0.01 or f_IFF-1 >= 0.01) and fpf == False:
+                if (f_FF[j]-1 >= 0.01 or f_IFF[j]-1 >= 0.01) and fpf == False:
 
                     Farg = Farg - dn
                     dn = dn / 2
@@ -231,62 +223,61 @@ def Q2a(Lamina_mean = Lamina_mean, Laminate = Laminate):
 
 
                 # Determine which failure mode, and apply deg rule
-                if (f_FF >= 1 and failure[j] <= 1) or (f_IFF >= 1 and failure[j] == 1):
-                    print("A")
+                if (f_FF[j] >= 1 and failure[j] <= 1) or (f_IFF[j] >= 1 and failure[j] == 1):
+                    # print("A")
                     failure[j] = 2
-                    print("failure:", failure)
+                    # print("failure:", failure)
                     if fpf == False:
                         Nf[2, i] = Ny
                         Nf[3, i] = Ns
                         fpf = True
-                        print("fpf")
+                        # print("fpf")
 
                     plys.ABD[0:3, 0:3] = plys.ABD[0:3, 0:3] - 4 * Qxyz[j] * t
 
                     #strength[j, :] = 0
 
-                    print("strength", strength[j])
-                    print("stress", stresses[0:3,j])
+                    # print("strength", strength[j])
+                    # print("stress", stresses[0:3,j])
 
 
                     if np.count_nonzero(failure == 2) == 4:
                         Nl[2, i] = Ny
                         Nl[3, i] = Ns
                         lpf = True
-                        print("Last ply failure!!")
+                        # print("Last ply failure!!")
                     dn = D
                     break
                 #Test for inter fiber fracture
-                elif f_IFF >= 1 and failure[j] == 0:
-                    print("B")
+                elif f_IFF[j] >= 1 and failure[j] == 0:
+                    # print("B")
                     failure[j] = 1
-                    print("failure:", failure)
+                    # print("failure:", failure)
                     if fpf == False:
                         Nf[2, i] = Ny
                         Nf[3, i] = Ns
                         fpf = True
-                        print("fpf")
+                        # print("fpf")
                     Q123[j] = Lamina(t, E1_mean, E2_mean * 0.1, v12_mean, G12_mean)
                     Qxyz[j] = Laminate([angle[i]], Lamina(t, E1_mean, E2_mean * 0.1, v12_mean, G12_mean)).QGlobalAr[0]
                     plys.ABD[0:3, 0:3] = plys.ABD[0:3, 0:3] - 4 * plys.QGlobalAr[j] * t + 4 * Qxyz[j] * t
 
                     #strength[j, 2:4] = 0.1 * strength[j, 2:4]
 
-                    print(strength[j, :])
+                    # print(strength[j, :])
 
                     if np.count_nonzero(failure == 2) == 4:
                         Nl[2, i] = Ny
                         Nl[3, i] = Ns
                         lpf = True
-                        print("Last ply failure!!")
+
                     dn = D
                     break
                 # When no failure detected on the last ply, continue back to first ply and increase load
                 elif j == 3:
-                    print("C")
+
                     Farg = Farg + dn
-                    print("Force:", Farg)
-                    print("Failures:", failure)
+
                 # lpf = True
 
     plt.plot(Nf[0],Nf[1],marker="<", label="fpf Max")
@@ -294,9 +285,11 @@ def Q2a(Lamina_mean = Lamina_mean, Laminate = Laminate):
     plt.plot(Nf[2], Nf[3],marker="o", label="fpf Puck")
     plt.plot(Nl[2], Nl[3],marker="s", label="lpf Puck")
     plt.legend()
+    plt.savefig("Q2a.png")
     plt.show()
     print(Nf)
     print(Nl)
+
     return [Nf, Nl]
 Q2a()
 
