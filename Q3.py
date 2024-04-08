@@ -16,8 +16,10 @@ import multiprocessing
 
 
 def Q3(LayUp, Load, n = 100):
+    # Generate fpf values for prescribed lamina
     FPF = np.zeros((2,n), dtype = float)
     for n_i in tqdm(range(n)):
+        # Initialize randomly picked lamina properties
         LaminaLst=[]
         for i in range(len(LayUp)):
             # Random pick
@@ -36,6 +38,7 @@ def Q3(LayUp, Load, n = 100):
         LoadFPFNorm = np.linalg.norm(LoadFPF)
         FPF[0, n_i] = LoadFPFNorm/LoadNorm1
         FPF[1, n_i] = LoadFPFNorm/LoadNorm2
+    # Store Data
     for i in range(len(Load[0])):
         with open(f'Q3_DataAnalysis/Data/reliability_analysis_Load{int(round(np.linalg.norm(Load[:,i])/1e3, 0))}_n{n}_FPF.pkl', 'wb') as f:  # open a text file
             pickle.dump(FPF[i, :], f) # serialize the list
@@ -55,6 +58,7 @@ def Q3(LayUp, Load, n = 100):
 
 
 if __name__ == '__main__':
+    # Set seed
     np.random.seed(0)
     LayUp = np.array([0, 90, 45, -45])
     LayUp = np.append(LayUp, np.flip(LayUp))
