@@ -56,23 +56,37 @@ def Q1a(n):
     #print(vxy)
     #print(vyx)
     fig, axs = plt.subplots(2,2)
-    axs[0,0].plot(angle, Ex)
-    axs[0,0].set_title('Ex')
+    axs[0, 0].plot(angle, Ex)
+    axs[0, 0].set_title('Ex')
+    axs[0, 0].set_ylabel('Ex [GPa]')
     axs[1, 0].plot(angle, Ey)
     axs[1, 0].set_title('Ey')
+    axs[1, 0].set_ylabel('Ey [GPa]')
     axs[0, 1].plot(angle, Gxy)
     axs[0, 1].set_title('Gxy')
+<<<<<<< Updated upstream
     axs[1, 1].plot(angle, vxy)
     axs[1, 1].plot(angle, vyx)
 
+=======
+    axs[0, 1].set_ylabel('Gxy [GPa]')
+    axs[1, 1].plot(angle, vxy, label="vxy")
+    axs[1, 1].plot(angle, vyx, label="vyx")
+>>>>>>> Stashed changes
     axs[1, 1].set_title('vxy, vyx')
+    axs[1, 1].set_ylabel('v [-]')
+    axs[1, 1].legend()
 
 
     for ax in axs.flat:
         ax.set(xlabel="angle")
     plt.tight_layout()
+<<<<<<< Updated upstream
     plt.savefig("Q1A")
     plt.show()
+=======
+    plt.savefig("Plots/engineeringConstants")
+>>>>>>> Stashed changes
 
     print(LayUp)
 
