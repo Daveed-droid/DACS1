@@ -68,6 +68,7 @@ def Q1a(n):
 
     for ax in axs.flat:
         ax.set(xlabel="angle")
+
     plt.show()
 
     print(LayUp)
