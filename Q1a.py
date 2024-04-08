@@ -64,11 +64,14 @@ def Q1a(n):
     axs[0, 1].set_title('Gxy')
     axs[1, 1].plot(angle, vxy)
     axs[1, 1].plot(angle, vyx)
+
     axs[1, 1].set_title('vxy, vyx')
+
 
     for ax in axs.flat:
         ax.set(xlabel="angle")
-
+    plt.tight_layout()
+    plt.savefig("Q1A")
     plt.show()
 
     print(LayUp)
