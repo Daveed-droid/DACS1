@@ -39,6 +39,8 @@ def plotStresses(Laminate, stresses, stressi):
 	plt.ylabel("Position From Midline [mm]")
 	plt.savefig(f"Plots/Q1b/stress{stressi}")
 	plt.show()
+	for i in range(len(data)):
+		print(data[i,0]/1e6)
 
 def plotStrains(Laminate, strains, straini):
 	title = {
@@ -70,6 +72,8 @@ def plotStrains(Laminate, strains, straini):
 	plt.ylabel("Position From Midline [mm]")
 	plt.savefig(f"Plots/Q1b/strain{straini}")
 	plt.show()
+	for i in range(len(data)):
+		print(data[i,0])
 
 
 def Q1b(Lamina_mean = Lamina_mean, Laminate = Laminate):

@@ -68,18 +68,19 @@ if __name__ == '__main__':
     print()
     t = 0.125e-3
 
-    Q3(LayUp, Load, n=12800000) # ~ 4 hr
-    Q3(LayUp, Load, n=6400000) # ~ 2 hr
-    Q3(LayUp, Load, n=3200000) # ~ 1 hr ----- 7hr
-    Q3(LayUp, Load, n=1600000) # ~ 32 min
-    Q3(LayUp, Load, n=800000) # ~ 16 min
-    Q3(LayUp, Load, n=400000) # ~ 8 min
-    Q3(LayUp, Load, n=200000) # ~ 4 min
-    Q3(LayUp, Load, n=100000) # ~ 2 min
-    Q3(LayUp, Load, n=50000) # ~ 1 min
-    Q3(LayUp, Load, n=25000) # ~ 30 sec
-    Q3(LayUp, Load, n=12500) # ~ 15 sec ----- 8hr
-
+    # Q3(LayUp, Load, n=12800000) # ~ 4 hr
+    # Q3(LayUp, Load, n=6400000) # ~ 2 hr
+    # Q3(LayUp, Load, n=3200000) # ~ 1 hr ----- 7hr
+    # Q3(LayUp, Load, n=1600000) # ~ 32 min
+    # Q3(LayUp, Load, n=800000) # ~ 16 min
+    # Q3(LayUp, Load, n=400000) # ~ 8 min
+    # Q3(LayUp, Load, n=200000) # ~ 4 min
+    # Q3(LayUp, Load, n=100000) # ~ 2 min
+    # Q3(LayUp, Load, n=50000) # ~ 1 min
+    # Q3(LayUp, Load, n=25000) # ~ 30 sec
+    # Q3(LayUp, Load, n=12500) # ~ 15 sec ----- 8hr
+    for i in range(len(Lamina_props)):
+        print(fr"{Lamina_props[i,0]} & {Lamina_props[i,1]} \\ \hline")
 
 
 
