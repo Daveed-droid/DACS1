@@ -18,12 +18,14 @@ def Q2a(Lamina_mean = Lamina_mean, Laminate = Laminate):
     LayUp = np.append(LayUp, np.flip(LayUp))
     LayUp = np.append(LayUp, np.flip(LayUp))
     #LayUp = np.array([0,45,-45,90,90,-45,45,0]) # Test to compare to lecture
-    angle = np.arange(230,361,1000)
+    angle = np.arange(0,361,10)
     print(angle)
     sig = np.array([Xt_mean,Xc_mean,Yt_mean,Yc_mean,S_mean])
     strength = np.array([sig,sig,sig,sig])
     Nf = np.zeros([4,len(angle)])
     Nl = np.zeros([4, len(angle)])
+    GS1 = np.zeros([4, len(angle)])
+    GS2 = np.zeros([4, len(angle)])
     D = 50000 # Main step size
 
     for i in range(0,len(angle)):
@@ -37,7 +39,7 @@ def Q2a(Lamina_mean = Lamina_mean, Laminate = Laminate):
         plys = Laminate(LayUp, Lamina_mean)
         strength = np.array([sig, sig, sig, sig])
         #stresses = plys.calcPlyStresses(Load)
-        print("ABD", plys.ABD)
+        #print("ABD", plys.ABD)
         Q = np.array([plys.QGlobalAr[0], plys.QGlobalAr[1], plys.QGlobalAr[2], plys.QGlobalAr[3]])
         Qxyz = np.array([plys.QGlobalAr[0], plys.QGlobalAr[1], plys.QGlobalAr[2], plys.QGlobalAr[3]])
         Q123 = np.array([Lamina_mean.calcQMatrix(), Lamina_mean.calcQMatrix(), Lamina_mean.calcQMatrix(),
@@ -48,6 +50,7 @@ def Q2a(Lamina_mean = Lamina_mean, Laminate = Laminate):
             Ns = Farg*np.sin(np.deg2rad(angle[i]))
 
             Ny = Farg*np.cos(np.deg2rad(angle[i]))
+
             Load = np.array([0, Ny, Ns, 0, 0, 0]).T
             #Load = np.array([Ny, Ns, 0, 0, 0, 0]).T    #Test
             stresses = plys.calcPlyStresses2(Load)
@@ -94,6 +97,8 @@ def Q2a(Lamina_mean = Lamina_mean, Laminate = Laminate):
                     if fpf == False:
                         Nf[0,i] = Ny
                         Nf[1,i] = Ns
+                        GS1[0, i] = plys.calcGloStrains(Load)[0,0]
+                        GS1[1, i] = plys.calcGloStrains(Load)[1,0]
                         fpf = True
 
 
@@ -106,6 +111,8 @@ def Q2a(Lamina_mean = Lamina_mean, Laminate = Laminate):
                     if np.count_nonzero(failure == 2) == 4:
                         Nl[0, i] = Ny
                         Nl[1, i] = Ns
+                        GS2[0, i] = plys.calcGloStrains(Load)[0,0]
+                        GS2[1, i] = plys.calcGloStrains(Load)[1,0]
                         lpf = True
                     dn = D
                     break
@@ -115,6 +122,8 @@ def Q2a(Lamina_mean = Lamina_mean, Laminate = Laminate):
                     if fpf == False:
                         Nf[0,i] = Ny
                         Nf[1,i] = Ns
+                        GS1[0, i] = plys.calcGloStrains(Load)[0,0]
+                        GS1[1, i] = plys.calcGloStrains(Load)[1,0]
                         fpf = True
 
                     Q[j] = Laminate([angle[i]], Lamina(t, E1_mean, E2_mean * 0.1, v12_mean, G12_mean)).QGlobalAr[0]
@@ -126,6 +135,8 @@ def Q2a(Lamina_mean = Lamina_mean, Laminate = Laminate):
                     if np.count_nonzero(failure == 2) == 4:
                         Nl[0, i] = Ny
                         Nl[1, i] = Ns
+                        GS2[0, i] = plys.calcGloStrains(Load)[0,0]
+                        GS2[1, i] = plys.calcGloStrains(Load)[1,0]
                         lpf = True
                     dn = D
                     break
@@ -195,6 +206,8 @@ def Q2a(Lamina_mean = Lamina_mean, Laminate = Laminate):
                     if fpf == False:
                         Nf[2, i] = Ny
                         Nf[3, i] = Ns
+                        GS1[2, i] = plys.calcGloStrains(Load)[0,0]
+                        GS1[3, i] = plys.calcGloStrains(Load)[1,0]
                         fpf = True
                     plys.ABD[0:3, 0:3] = plys.ABD[0:3, 0:3] - 4 * Qxyz[j] * t
 
@@ -203,6 +216,8 @@ def Q2a(Lamina_mean = Lamina_mean, Laminate = Laminate):
                     if np.count_nonzero(failure == 2) == 4:
                         Nl[2, i] = Ny
                         Nl[3, i] = Ns
+                        GS2[2, i] = plys.calcGloStrains(Load)[0,0]
+                        GS2[3, i] = plys.calcGloStrains(Load)[1,0]
                         lpf = True
                     dn = D
                     break
@@ -214,6 +229,8 @@ def Q2a(Lamina_mean = Lamina_mean, Laminate = Laminate):
                     if fpf == False:
                         Nf[2, i] = Ny
                         Nf[3, i] = Ns
+                        GS1[2, i] = plys.calcGloStrains(Load)[0,0]
+                        GS1[3, i] = plys.calcGloStrains(Load)[1,0]
                         fpf = True
 
                     Q123[j] = Lamina(t, E1_mean, E2_mean * 0.1, v12_mean, G12_mean)
@@ -226,6 +243,8 @@ def Q2a(Lamina_mean = Lamina_mean, Laminate = Laminate):
                     if np.count_nonzero(failure == 2) == 4:
                         Nl[2, i] = Ny
                         Nl[3, i] = Ns
+                        GS2[2, i] = plys.calcGloStrains(Load)[0,0]
+                        GS2[3, i] = plys.calcGloStrains(Load)[1,0]
                         lpf = True
 
                     dn = D
@@ -256,7 +275,15 @@ def Q2a(Lamina_mean = Lamina_mean, Laminate = Laminate):
     plt.show()
     #print(Nf)
     #print(Nl)
-
+    plt.plot(GS1[2] , GS1[3], marker="o", label="fpf Puck")
+    plt.plot(GS2[2] , GS2[3], marker="s", label="lpf Puck")
+    plt.legend()
+    plt.title("Global Strain Puck")
+    #plt.xlabel("Ny[N/mm]")
+    #plt.ylabel("Ns[N/mm]")
+    plt.savefig("Q2aPuckStrain.png")
+    plt.show()
+    print(GS1)
     return [Nf, Nl]
 Q2a()
 
