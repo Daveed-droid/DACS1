@@ -28,7 +28,7 @@ def Q3(LayUp, Load, n = 100):
                 props.append(np.random.normal(mean, std))
             E1, E2, v12, G12 = props[0:4]
             Lamina_ = Lamina(t, E1, E2, v12, G12)
-            Xt, Yt, Xc, Yc, S = props[4:9]
+            Xt, Xc, Yt, Yc, S = props[4:9]
             Lamina_.setStrengths(Xt, Yt, Xc, Yc, S)
             LaminaLst.append(Lamina_)
         Laminate_ = Laminate(LayUp, LaminaLst)
@@ -39,18 +39,21 @@ def Q3(LayUp, Load, n = 100):
         FPF[0, n_i] = LoadFPFNorm/LoadNorm1
         FPF[1, n_i] = LoadFPFNorm/LoadNorm2
     # Store Data
-    for i in range(len(Load[0])):
-        with open(f'Q3_DataAnalysis/Data/reliability_analysis_Load{int(round(np.linalg.norm(Load[:,i])/1e3, 0))}_n{n}_FPF.pkl', 'wb') as f:  # open a text file
-            pickle.dump(FPF[i, :], f) # serialize the list
-        f.close()
-        (mean, std) = norm.fit(FPF[i, :])
-        with open(f'Q3_DataAnalysis/Data/reliability_analysis_Load{int(round(np.linalg.norm(Load[:,i])/1e3, 0))}_n{n}_meanStd.pkl', 'wb') as f:  # open a text file
-            pickle.dump([mean, std], f) # serialize the list
-        f.close()
+    # for i in range(len(Load[0])):
+    #     with open(f'Q3_DataAnalysis/Data/reliability_analysis_Load{int(round(np.linalg.norm(Load[:,i])/1e3, 0))}_n{n}_FPF.pkl', 'wb') as f:  # open a text file
+    #         pickle.dump(FPF[i, :], f) # serialize the list
+    #     f.close()
+    #     (mean, std) = norm.fit(FPF[i, :])
+    #     with open(f'Q3_DataAnalysis/Data/reliability_analysis_Load{int(round(np.linalg.norm(Load[:,i])/1e3, 0))}_n{n}_meanStd.pkl', 'wb') as f:  # open a text file
+    #         pickle.dump([mean, std], f) # serialize the list
+    #     f.close()
     # x = np.linspace(mean - 8*std, mean + 8*std, 100)
-    # plt.hist(FPF)
-    # plt.show()
-    # plt.clf()
+    plt.hist(FPF[0, :])
+    plt.show()
+    plt.clf()
+    plt.hist(FPF[1, :])
+    plt.show()
+    plt.clf()
     # plt.plot(x, norm.pdf(x, mean, std))
     # plt.show()
     # print("Failure Prob: ", norm.cdf(1, mean, std))
@@ -81,10 +84,10 @@ if __name__ == '__main__':
     # Q3(LayUp, Load, n=200000) # ~ 4 min
     # Q3(LayUp, Load, n=100000) # ~ 2 min
     # Q3(LayUp, Load, n=50000) # ~ 1 min
-    # Q3(LayUp, Load, n=25000) # ~ 30 sec
+    Q3(LayUp, Load, n=25000) # ~ 30 sec
     # Q3(LayUp, Load, n=12500) # ~ 15 sec ----- 8hr
-    for i in range(len(Lamina_props)):
-        print(fr"{Lamina_props[i,0]} & {Lamina_props[i,1]} \\ \hline")
+    # for i in range(len(Lamina_props)):
+    #     print(fr"{Lamina_props[i,0]} & {Lamina_props[i,1]} \\ \hline")
 
 
 
