@@ -20,7 +20,9 @@ class Fuselage:
 			self.element_ang.append(-(90+((Theta[i]+Theta[i+1])/2)))
 		self.element_pos = np.asarray(self.element_pos, dtype = float)
 		if type(Material) == Laminate:
-			pass
+			# Calc ABD
+			self.ABD = np.zeros((6,6), dtype = float)
+			
 		elif type(Material) == Metal:
 			pass
 		else:
@@ -40,7 +42,7 @@ class Fuselage:
 	def Load(self, moment: float, shear: float) -> bool:
 		# Global buckling
 		# Yield
-		
+
 		return Failed
 
 
