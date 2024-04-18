@@ -161,7 +161,7 @@ if __name__ == "__main__":
 	AssignmentMetalLamina = Lamina(t, 69e9, 69e9, 0.29, 26e9)
 	AssignmentMetalLamina.setStrengths(410e6, 400e6, 430e6, 430e6, 230e6)
 	Lam = Laminate([0], AssignmentMetalLamina)
-	a = Fuselage([Lam], [1], Stiffeners = False, dTheta = 360 // nelem, Metal = False)
+	a = Fuselage([Lam], [1], Stiffeners = False, dTheta = 360 // nelem, Metal = True)
 	a.PlotNodes()
 	Failed = a.Load(15e6, 1.5e6, plot_failure = True)
 	print(Failed)
