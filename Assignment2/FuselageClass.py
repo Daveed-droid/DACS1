@@ -138,7 +138,7 @@ class Fuselage:
 
 if __name__ == "__main__":
 	CompLam = [0, 90, 90, 0]
-	ShearLam = [45, -45, -45,45]
+	ShearLam = [45, -45, -45, 45]
 	TensionLam = [0, 0, 0, 0]
 	Lam1 = Laminate(CompLam, AssignmentLamina)
 	Lam2 = Laminate(ShearLam, AssignmentLamina)
@@ -149,3 +149,4 @@ if __name__ == "__main__":
 	a.PlotNodes()
 	Failed = a.Load(15e6, 1.5e6, plot_failure = True)
 	print(Failed)
+
