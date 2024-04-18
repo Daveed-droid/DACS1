@@ -269,6 +269,36 @@ class Laminate():
 		f_FFp[mask] = N1[mask]/Xt[mask]
 		return f_FFp, f_IFFp	#  result of analysis, if f_p is below 1 lamina did not fail, if it is 1 or higher lamina has failed
 
+	def MaxStrain(self, Strain):  # Strength is list of ply properties: [Xt_mean,Xc_mean,Yt_mean,Yc_mean,S_mean]
+		"""
+		Vectorized max stress failure criteria calculator for given laminate and load
+		"""
+		Stress = self.calcPlyStressesFromStrain(Strain)
+		Xt = np.asarray([self.Lamina[k].Xt for k in range(len(self.LayUp))])
+		Xc = np.asarray([self.Lamina[k].Xc for k in range(len(self.LayUp))])
+		Yt = np.asarray([self.Lamina[k].Yt for k in range(len(self.LayUp))])
+		Yc = np.asarray([self.Lamina[k].Yc for k in range(len(self.LayUp))])
+		S = np.asarray([self.Lamina[k].S for k in range(len(self.LayUp))])
+		N1 = Stress[0, :].T
+		N2 = Stress[1, :].T
+		N12 = Stress[2, :].T
+
+		f_xm, f_ym, f_sm = np.zeros_like(Xt), np.zeros_like(Xt), np.zeros_like(Xt)
+		# x max stress
+		T, C = N1 >= 0, N1 < 0
+		f_xm[T] = N1[T] / Xt[T]
+		f_xm[C] = -N1[C] / Xc[C]
+		# y max stress
+		T, C = N2 >= 0, N2 < 0
+		f_ym[T] = N2[T] / Yt[T]
+		f_ym[C] = -N2[C] / Yc[C]
+		# x max stress
+		T, C = N12 >= 0, N12 < 0
+		f_sm[T] = N12[T] / S[T]
+		f_sm[C] = -N12[C] / S[C]
+
+		return f_xm, f_ym, f_sm
+
 	def calcFailure(self, Load, dL_step = 5000):
 		"""
 		Failure load calculator, gives fpf and lpf load.
