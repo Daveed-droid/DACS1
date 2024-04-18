@@ -22,6 +22,7 @@ class Metal:
 		self.Yt, self.Yc = Yt, Yc
 		self.S = S
 
+
 AssignmentMetal = Metal(69e9, 26e9, 0.29)
 AssignmentMetal.setStrengths(410e6, 400e6, 430e6, 430e6, 230e6)
 

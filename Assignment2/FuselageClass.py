@@ -41,12 +41,12 @@ class Fuselage:
 		self.mass = A*rho
 		if type(Material) == list:
 			self.laminates = []
-			assert self.nElem%2 == 0 # Must be even
-			assert (self.nElem//2)%sum(ratio) == 0 # Must be divisible by the sum of the ratio
+			assert self.nElem%2 == 0  # Must be even
+			assert (self.nElem//2)%sum(ratio) == 0  # Must be divisible by the sum of the ratio
 			halfnElem = self.nElem//2
 			perRatio = halfnElem//sum(ratio)
 			for i in range(len(self.Material)):
-				self.laminates+=[self.Material[i]]*(perRatio*ratio[i])
+				self.laminates += [self.Material[i]]*(perRatio*ratio[i])
 			self.laminates = self.laminates + list(reversed(self.laminates))
 			# Calc ABD
 			self.ABD = np.zeros((6,6), dtype = float)
@@ -54,29 +54,26 @@ class Fuselage:
 			self.shear_stiff = np.zeros(self.nElem)
 			axial_stiff = 0
 			temp = 0
+			# Finding neutral axis and setting shear stiffness
 			for i in range(self.nElem):
 				x1, y1, x2, y2 = self.element_pos[i, :]
+				Ex, Ey, vxy, vyx, Gxy = self.laminates[i].calcEngConst()
 				ang = self.element_ang[i]
-				AMat = self.laminates[i].AMatrix
 				h = self.laminates[i].h
 				l = np.linalg.norm(np.array([x2, y2]).T - np.array([x1, y1]).T)
-				A11 = AMat[0, 0]
-				A33 = AMat[2, 2]
-				self.shear_stiff[i] = A33*l*abs(np.sin(np.deg2rad(ang)))
+				self.shear_stiff[i] = Gxy*h*l*abs(np.sin(np.deg2rad(ang)))
 				# Find neutral axis
-				axial_stiff += A11
-				temp += A11*((y1+y2)/2)
+				axial_stiff += Ex*h*l
+				temp += Ex*h*l*((y1+y2)/2)
 			self.y_neutral_axis = temp/axial_stiff
+			# Setting bending stiffness
 			for i in range(self.nElem):
 				x1, y1, x2, y2 = self.element_pos[i, :]
-				ang = self.element_ang[i]
-				AMat = self.laminates[i].AMatrix
+				Ex, Ey, vxy, vyx, Gxy = self.laminates[i].calcEngConst()
 				h = self.laminates[i].h
 				l = np.linalg.norm(np.array([x2, y2]).T - np.array([x1, y1]).T)
-				A11 = AMat[0, 0]
-				A33 = AMat[2, 2]
 				# Adding steiner term
-				self.bend_stiff[i] = A11*l*(((y1+y2)/2)-self.y_neutral_axis)**2
+				self.bend_stiff[i] = Ex*h*l*(((y1+y2)/2)-self.y_neutral_axis)**2
 		else:
 			print("Invalid")
 
@@ -124,7 +121,6 @@ class Fuselage:
 		plt.show()
 
 	def Load(self, moment: float, shear: float, plot_failure=False):
-		# Global buckling
 
 		# Material Failure
 		EI = np.sum(self.bend_stiff)
@@ -156,7 +152,7 @@ class Fuselage:
 		if plot_failure:
 			self.PlotNodes(Failed)
 		return Failed
-
+"""
 	def ShearFlow(self, load):
 		if Case == 0:
 			Ixx = (D**4-(D-t)**4)*3.1415/64
@@ -202,7 +198,7 @@ class Fuselage:
 			Nxstif = 2*3.1415**2/b**2*((D11*D22)**0.5+D12+2*D66)
 
 		return Sig_stif, Nxstif
-
+"""
 if __name__ == "__main__":
 	CompLam = [0, 0, 0]
 	ShearLam = [45, -45, 45, -45]
