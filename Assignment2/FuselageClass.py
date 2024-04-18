@@ -31,7 +31,7 @@ class Fuselage:
 		self.element_pos = np.asarray(self.element_pos, dtype = float)
 		self.Material =  Material
 		self.ratio = ratio
-		if type(Material) == list:
+		if type(Material) == list or type(Material) == Laminate:
 			self.laminates = []
 			assert self.nElem%2 == 0 # Must be even
 			assert (self.nElem//2)%sum(ratio) == 0 # Must be divisible by the sum of the ratio
@@ -63,9 +63,9 @@ class Fuselage:
 			self.y_neutral_axis = temp/axial_stiff
 
 		elif type(Material) == Metal:
-			pass
+			I = np.pi * ((dia / 2 + Material.t / 2) ** 4 - (dia / 2 - Material.t / 2) ** 4) / 4
 		else:
-			pass
+			print("Invalid")
 
 
 
@@ -138,7 +138,7 @@ class Fuselage:
 
 if __name__ == "__main__":
 	CompLam = [0, 90, 90, 0]
-	ShearLam = [45, -45, -45,45]
+	ShearLam = [45, -45, -45, 45]
 	TensionLam = [0, 0, 0, 0]
 	Lam1 = Laminate(CompLam, AssignmentLamina)
 	Lam2 = Laminate(ShearLam, AssignmentLamina)
@@ -146,6 +146,15 @@ if __name__ == "__main__":
 	# nelem should be divisible by 2 and divisible by sum of ratio
 	nelem = 30
 	a = Fuselage([Lam1, Lam2, Lam3], ratio = [1,1,1], Stiffeners = False, dTheta = 360//nelem)
+	a.PlotNodes()
+	Failed = a.Load(15e6, 1.5e6, plot_failure = True)
+	print(Failed)
+
+	t = 1.5e-3
+	AssignmentMetalLamina = Lamina(t, 69e9, 69e9, 0.29, 26e9)
+	AssignmentMetalLamina.setStrengths(410e6, 400e6, 430e6, 430e6, 230e6)
+	Lam = Laminate([0], AssignmentMetalLamina)
+	a = Fuselage([Lam], [1], Stiffeners = False, dTheta = 360 // nelem)
 	a.PlotNodes()
 	Failed = a.Load(15e6, 1.5e6, plot_failure = True)
 	print(Failed)
