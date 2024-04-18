@@ -125,6 +125,7 @@ class Fuselage:
 
 	def Load(self, moment: float, shear: float, plot_failure=False):
 		# Global buckling
+
 		# Material Failure
 		EI = np.sum(self.bend_stiff)
 		GA = np.sum(self.shear_stiff)
@@ -156,6 +157,51 @@ class Fuselage:
 			self.PlotNodes(Failed)
 		return Failed
 
+	def ShearFlow(self, load):
+		if Case == 0:
+			Ixx = (D**4-(D-t)**4)*3.1415/64
+		elif Case == 1:
+			pass
+		else:
+			pass
+
+		qs = -Sy/Ixx*
+
+
+		return qs
+	def SkinBuckling(self):
+		#Compression
+		a = 1 #Length
+		b = 2*np.pi/self.nNodes*D
+		AR = a/b
+		m = 2 #???
+		D11 = self.ABD[3,3]
+		D66 self.ABD[5,5]
+		D12 = self.ABD[3,4]
+		D22 = self.ABD[4,4]
+
+		NCom = (np.pi**2(D11*m**4+2*(D12+2*D66)*m**2*AR**2+D22*AR**4))/(a**2*m**2)
+
+		#Shear
+		A = -0.27 + 0.185*(D12+2*D66)/(D11*D22)**0.5
+		B = 0.82+0.46*(D12+2*D66)/(D11*D22)-0.2((D12+2*D66)/(D11*D66)**0.5)**2
+		beta = (D11/D22)**0.25
+		K = 8.2 + 5*(D12+2*D66)/((D11*D22)**0.5*(A/beta+B*beta)
+		NShear = 4*(D11*D22**3)**0.25*K/b**2
+		return NCom, N
+
+	def StiffenerCrippling(self, load):
+
+		if StiffCond == 0:	#OEF
+			Sig_OEFr = 1.63/((b/t)**0.717)	#Ratio of crippling strength to compressive strength of stiffner
+			Sig_stif = Sig_OEFr * XcStif
+			Nxstif = 12*D66/b**2
+		else:	#NEF
+			Sig_stifr = 11/((b/t)**1.124)	#Ratio of crippling strength to compressive strength of stiffner
+			Sig_stif = Sig_NEFr * XCStif
+			Nxstif = 2*3.1415**2/b**2*((D11*D22)**0.5+D12+2*D66)
+
+		return Sig_stif, Nxstif
 
 if __name__ == "__main__":
 	CompLam = [0, 0, 0]
