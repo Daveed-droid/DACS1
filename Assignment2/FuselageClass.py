@@ -15,8 +15,9 @@ def Rx(theta):
 
 
 class Fuselage:
-	def __init__(self, Material, ratio = [1,1,1], Stiffeners: bool = False, dTheta = 20):
+	def __init__(self, Material, ratio = [1, 1, 1], Stiffeners: bool = False, Metal = False, dTheta = 20):
 		dia = 6
+		self.Metal = Metal
 		# Create fuselage nodes
 		Theta = np.arange(-90, 271, dTheta)
 		self.nNodes = len(Theta)
@@ -31,7 +32,7 @@ class Fuselage:
 		self.element_pos = np.asarray(self.element_pos, dtype = float)
 		self.Material =  Material
 		self.ratio = ratio
-		if type(Material) == list or type(Material) == Laminate:
+		if type(Material) == list:
 			self.laminates = []
 			assert self.nElem%2 == 0 # Must be even
 			assert (self.nElem//2)%sum(ratio) == 0 # Must be divisible by the sum of the ratio
@@ -62,8 +63,6 @@ class Fuselage:
 				temp += A11*((y1+y2)/2)
 			self.y_neutral_axis = temp/axial_stiff
 
-		elif type(Material) == Metal:
-			I = np.pi * ((dia / 2 + Material.t / 2) ** 4 - (dia / 2 - Material.t / 2) ** 4) / 4
 		else:
 			print("Invalid")
 
@@ -126,11 +125,19 @@ class Fuselage:
 		Failed = np.zeros(self.nElem)
 		for i in range(self.nElem):
 			lam = self.laminates[i]
-			f_FFp, f_IFFp = lam.PuckStrain(LamStrains[:, i])
-			a = np.max(f_FFp)
-			b = np.max(f_IFFp)
-			c = max(a, b)
-			Failed[i] = c
+			if not self.Metal:
+				f_FFp, f_IFFp = lam.PuckStrain(LamStrains[:, i])
+				a = np.max(f_FFp)
+				b = np.max(f_IFFp)
+				d = max(a, b)
+			elif self.Metal:
+				f_xm, f_ym, f_sm = lam.MaxStrain(LamStrains[:, i])
+				a = np.max(f_xm)
+				b = np.max(f_ym)
+				c = np.max(f_sm)
+				temp = max(a, b)
+				d = max(c, temp)
+			Failed[i] = d
 		if plot_failure:
 			self.PlotNodes(Failed)
 		return Failed
@@ -154,7 +161,7 @@ if __name__ == "__main__":
 	AssignmentMetalLamina = Lamina(t, 69e9, 69e9, 0.29, 26e9)
 	AssignmentMetalLamina.setStrengths(410e6, 400e6, 430e6, 430e6, 230e6)
 	Lam = Laminate([0], AssignmentMetalLamina)
-	a = Fuselage([Lam], [1], Stiffeners = False, dTheta = 360 // nelem)
+	a = Fuselage([Lam], [1], Stiffeners = False, dTheta = 360 // nelem, Metal = False)
 	a.PlotNodes()
 	Failed = a.Load(15e6, 1.5e6, plot_failure = True)
 	print(Failed)
