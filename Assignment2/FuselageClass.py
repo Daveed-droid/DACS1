@@ -15,7 +15,7 @@ def Rx(theta):
 
 
 class Fuselage:
-	def __init__(self, Material, ratio = [1, 1, 1], Stiffeners: bool = False, Metal = False, dTheta = 20):
+	def __init__(self, Material, ratio = [1, 1, 1], Stiffeners: bool = False, Metal = False, dTheta = 20, rho = 0):
 		dia = 6
 		self.Metal = Metal
 		# Create fuselage nodes
@@ -32,6 +32,13 @@ class Fuselage:
 		self.element_pos = np.asarray(self.element_pos, dtype = float)
 		self.Material =  Material
 		self.ratio = ratio
+		A = 0
+		for i in range(len(self.ratio)):
+			t = self.Material[i].h
+			A += np.pi*((dia/2 + t/2)**2-(dia/2 - t/2)**2)*self.ratio[i]/sum(self.ratio)
+			if Stiffeners:
+				raise NotImplementedError
+		self.mass = A*rho
 		if type(Material) == list:
 			self.laminates = []
 			assert self.nElem%2 == 0 # Must be even
@@ -55,14 +62,21 @@ class Fuselage:
 				l = np.linalg.norm(np.array([x2, y2]).T - np.array([x1, y1]).T)
 				A11 = AMat[0, 0]
 				A33 = AMat[2, 2]
-				# Adding steiner term
-				self.bend_stiff[i] = A11*l*((y1+y2)/2)**2
 				self.shear_stiff[i] = A33*l*abs(np.sin(np.deg2rad(ang)))
 				# Find neutral axis
 				axial_stiff += A11
 				temp += A11*((y1+y2)/2)
 			self.y_neutral_axis = temp/axial_stiff
-
+			for i in range(self.nElem):
+				x1, y1, x2, y2 = self.element_pos[i, :]
+				ang = self.element_ang[i]
+				AMat = self.laminates[i].AMatrix
+				h = self.laminates[i].h
+				l = np.linalg.norm(np.array([x2, y2]).T - np.array([x1, y1]).T)
+				A11 = AMat[0, 0]
+				A33 = AMat[2, 2]
+				# Adding steiner term
+				self.bend_stiff[i] = A11*l*(((y1+y2)/2)-self.y_neutral_axis)**2
 		else:
 			print("Invalid")
 
@@ -144,24 +158,24 @@ class Fuselage:
 
 
 if __name__ == "__main__":
-	CompLam = [0, 90, 90, 0]
-	ShearLam = [45, -45, -45, 45]
-	TensionLam = [0, 0, 0, 0]
+	CompLam = [0, 0, 0]
+	ShearLam = [45, -45, 45, -45]
+	TensionLam = [0, 0, 0]
 	Lam1 = Laminate(CompLam, AssignmentLamina)
 	Lam2 = Laminate(ShearLam, AssignmentLamina)
 	Lam3 = Laminate(TensionLam, AssignmentLamina)
 	# nelem should be divisible by 2 and divisible by sum of ratio
 	nelem = 30
-	a = Fuselage([Lam1, Lam2, Lam3], ratio = [1,1,1], Stiffeners = False, dTheta = 360//nelem)
+	a = Fuselage([Lam1, Lam2, Lam3], ratio = [1,1,1], Stiffeners = False, dTheta = 360//nelem, rho = 1610)
 	a.PlotNodes()
-	Failed = a.Load(15e6, 1.5e6, plot_failure = True)
-	print(Failed)
+	a.Load(15e6, 1.5e6, plot_failure = True)
+	print(a.mass)
 
 	t = 1.5e-3
 	AssignmentMetalLamina = Lamina(t, 69e9, 69e9, 0.29, 26e9)
 	AssignmentMetalLamina.setStrengths(410e6, 400e6, 430e6, 430e6, 230e6)
 	Lam = Laminate([0], AssignmentMetalLamina)
-	a = Fuselage([Lam], [1], Stiffeners = False, dTheta = 360 // nelem, Metal = False)
+	a = Fuselage([Lam], [1], Stiffeners = False, dTheta = 360 // nelem, Metal = True, rho = 2770)
 	a.PlotNodes()
-	Failed = a.Load(15e6, 1.5e6, plot_failure = True)
-	print(Failed)
+	a.Load(15e6, 1.5e6, plot_failure = True)
+	print(a.mass)
