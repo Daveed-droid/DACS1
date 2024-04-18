@@ -123,6 +123,9 @@ class Laminate():
 		return PlyStrains
 
 	def calcGloStrains(self, Load):
+		"""
+		Calculates global strains from a laminate and a load
+		"""
 		FlatStrains = np.linalg.inv(self.ABD)@Load
 		GloStrains = np.zeros((3, len(self.LayUp)))
 		zAvg = [(self.zlst[k + 1] + self.zlst[k])/2 for k in range(len(self.zlst) - 1)]
@@ -133,6 +136,9 @@ class Laminate():
 
 
 	def calcPlyStresses(self, Load):
+		"""
+		Calculates ply stresses from load
+		"""
 		gloStresses = self.calcGloStresses(Load)
 		plyStresses = np.zeros((3, len(self.LayUp)))
 		for k, theta in enumerate(self.LayUp):
@@ -140,6 +146,9 @@ class Laminate():
 		return plyStresses
 
 	def calcGloStresses(self, Load):
+		"""
+		Calculates global stresses from load
+		"""
 		gloStrains = self.calcGloStrains(Load)
 		gloStresses = np.zeros((3, len(self.LayUp)))
 		for k in range(len(self.LayUp)):
@@ -179,6 +188,9 @@ class Laminate():
 
 
 	def Puck(self, Load):		# Strength is list of ply properties: [Xt_mean,Xc_mean,Yt_mean,Yc_mean,S_mean]
+		"""
+		Vectorized puck failure criteria calculator for given laminate and load
+		"""
 		Stress = self.calcPlyStresses(Load)
 		pt12 = 0.3
 		pc12 = 0.25
@@ -207,6 +219,9 @@ class Laminate():
 		return f_FFp, f_IFFp	#  result of analysis, if f_p is below 1 lamina did not fail, if it is 1 or higher lamina has failed
 
 	def calcFailure(self, Load, dL_step = 5000):
+		"""
+		Failure load calculator, gives fpf and lpf load.
+		"""
 		failure = np.zeros(len(self.LayUp), dtype = int)
 		lpf = False
 		LoadFPF = np.zeros_like(Load)
@@ -282,6 +297,9 @@ class Laminate():
 					Load = Load + dL
 		return LoadFPF, LoadLPF
 	def calcFailurePuck(self, Load, dL_step=100000000):
+		"""
+		Calculates the failure load just using puck's failure criteria
+		"""
 		Failed = False
 		LoadI = np.zeros_like(Load)
 		dL = Load*dL_step/np.linalg.norm(Load)
@@ -300,6 +318,9 @@ class Laminate():
 			LoadI += dL
 		return FailLoad
 	def __repr__(self):
+		"""
+		String representation of the laminate class
+		"""
 		return f"Laminate of layup {self.LayUp}"
 
 if __name__ == "__main__":
