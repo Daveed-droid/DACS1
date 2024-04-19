@@ -115,7 +115,7 @@ class Fuselage:
 
 
 			self.y_neutral_axis = temp/axial_stiff
-
+			self.Inertia = np.zeros(self.nElem)
 			# Setting bending stiffness
 			for i in range(self.nElem):
 				x1, y1, x2, y2 = self.element_pos[i, :]
@@ -177,9 +177,10 @@ class Fuselage:
 		plt.show()
 
 	def Load(self, moment: float, shear: float, plot_failure=False):
-
+		t = self.thickness
 		# Material Failure
 		EI = np.sum(self.bend_stiff)
+		I = np.sum(self.Inertia)
 		GA = np.sum(self.shear_stiff)
 		y1 = self.element_pos[:, 1]
 		y2 = self.element_pos[:, 3]
@@ -189,6 +190,8 @@ class Fuselage:
 		LamStrains = np.zeros((3, self.nElem))
 		LamStrains[0, :] = ex
 		LamStrains[2, :] = exy
+		Stress = np.zeros([3,self.nElem])
+		Stress[0,:] = ex *EI/I
 		Failed = np.zeros(self.nElem)
 		for i in range(self.nElem):
 			lam = self.laminates[i]
@@ -217,6 +220,32 @@ class Fuselage:
 				LamStrains[2, :] = exy
 				FailLam = self.stiffenerElem[i].get_fpf(LamStrains)
 				self.FailedStiffners.append(max(FailLam))
+		for i in range(self.nElem):
+
+			#	Buckling with stiffners
+			if self.Stiffeners == True:
+				#Check for stiffener crippling
+				b = 2 * np.pi / self.nNodes * self.dia / 2  # Widt of element
+				As = [] # Insert Aerea of the stiffeners!!!
+				if Stress[0,i] >= StiffenerCrippling()[1]/As[i]:
+					print("Failure Stiffener Crippling", i, Stress[0,i]/ StiffenerCrippling()[1]/(t[i]*b))
+				#Check for skin buckling due to compression
+				if Stress[0,i] >= SkinBuckling()[0]/(t[i]*b):
+					print("Failure Skin Buckling", i, Stress[0,i]/ SkinBuckling()[0]/(t[i]*b))
+				# Check for skin buckling due to shear
+				if ShearFlow() >= SkinBuckling()[1]:
+					print("Failure Skin due to shear", i, ShearFlow()[i] / SkinBuckling()[1])
+			else:
+				b = self.dia*np.pi*3/16 #Length of element without stiffeners
+				#Check for skin buckling due to compression
+				if Stress[0,i] >= self.SkinBuckling()[0]/(t[i]*b):
+					print("Failure Skin Buckling", i, Stress[0,i]/ self.SkinBuckling()[0]/(t[i]*b))
+				# Check for skin buckling due to shear
+				if self.ShearFlow()[i] >= self.SkinBuckling()[1]:
+					print("Failure Skin due to shear", i, self.ShearFlow()[i] / self.SkinBuckling()[1])
+
+
+
 		if plot_failure:
 			self.PlotNodes(Failed)
 		return Failed
@@ -253,7 +282,7 @@ class Fuselage:
 
 
 		# print(B)
-
+		D = self.dia
 		if self.Metal == True:
 			Ixx = (D**4-(D-2*t)**4)*3.1415/64
 		elif self.Stiffeners == False:
