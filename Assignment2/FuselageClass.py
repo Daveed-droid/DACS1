@@ -34,10 +34,10 @@ class Fuselage:
 		self.Material = Material
 
 
-		# for i in range((self.nNodes-1):
-			# self.element_pos.append([self.x[i], self.y[i], self.x[i+1], self.y[i+1]])
-			# self.element_ang.append(-(90+((Theta[i]+Theta[i+1])/2)))
-			# self.element_pos = np.asarray(self.element_pos, dtype = float)
+		for i in range((self.nNodes-1)):
+			self.element_pos.append([self.x[i], self.y[i], self.x[i+1], self.y[i+1]])
+			self.element_ang.append(-(90+((Theta[i]+Theta[i+1])/2)))
+		self.element_pos = np.asarray(self.element_pos, dtype = float)
 		for i in range(int((self.nNodes-1)/2)):
 			if i/self.nNodes < self.ratio[0] /np.sum(self.ratio)/2:
 				#print(i, self.ratio,self.nNodes,self.thickness,self.Material[0].h)
@@ -48,8 +48,6 @@ class Fuselage:
 				self.thickness.append(self.Material[2].h)
 		self.thickness = np.append(self.thickness, np.flip(self.thickness))
 
-
-		self.element_pos = np.asarray(self.element_pos, dtype = float)
 
 
 		A = 0
