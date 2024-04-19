@@ -194,6 +194,7 @@ class Fuselage:
 				# Check for skin buckling due to shear
 				if ShearFlow() >= SkinBuckling()[1]:
 					print("Failure Skin due to shear", i, ShearFlow() / SkinBuckling()[1])
+
 		if plot_failure:
 			self.PlotNodes(Failed)
 		return Failed
