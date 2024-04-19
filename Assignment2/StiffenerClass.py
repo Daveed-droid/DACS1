@@ -120,6 +120,7 @@ class Stiffener():
 			self.GA += Gxy*l*h*np.sin(ang)
 		self.x_cg = self.EAx/self.EA
 		self.y_cg = self.EAy/self.EA
+		return self
 
 	def get_fpf(self, strains_fuselage):
 		Fail = []
@@ -139,7 +140,7 @@ class Stiffener():
 			LamStrains = np.zeros((3, 1))
 			LamStrains[0, :] = ex
 			LamStrains[2, :] = exy
-			f_FFp, f_IFFp = Lam.PuckStrain(LamStrains)
+			f_FFp, f_IFFp = Lam.PuckStrain(LamStrains.reshape(-1))
 			a = np.max(f_FFp)
 			b = np.max(f_IFFp)
 			d = max(a, b)

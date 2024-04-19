@@ -420,6 +420,7 @@ if __name__ == "__main__":
 	j = len(C)
 	D = [[(360//nelem)*(k+j), StringL] for k in range(1,A)]
 	E = B + C + D
+	print(E)
 	a = Fuselage([Lam1, Lam2, Lam3], ratio = [1,1,1], Stiffeners = E, dTheta = 360//nelem, rho = 1610)
 	a.PlotNodes()
 	a.Load(15e6, 1.5e6, plot_failure = True)
