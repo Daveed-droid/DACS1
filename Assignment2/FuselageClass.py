@@ -84,7 +84,7 @@ class Fuselage:
 				axial_stiff += Ex*h*l
 				temp += Ex*h*l*((y1+y2)/2)
 			self.y_neutral_axis = temp/axial_stiff
-
+			self.Inertia = np.zeros(self.nElem)
 			# Setting bending stiffness
 			for i in range(self.nElem):
 				x1, y1, x2, y2 = self.element_pos[i, :]
@@ -93,6 +93,7 @@ class Fuselage:
 				l = np.linalg.norm(np.array([x2, y2]).T - np.array([x1, y1]).T)
 				# Adding steiner term
 				self.bend_stiff[i] = Ex*h*l*(((y1+y2)/2)-self.y_neutral_axis)**2
+				self.Inertia[i] = self.bend_stiff[i]/Ex
 		else:
 			print("Invalid")
 
@@ -140,9 +141,10 @@ class Fuselage:
 		plt.show()
 
 	def Load(self, moment: float, shear: float, plot_failure=False):
-
+		t = self.thickness
 		# Material Failure
 		EI = np.sum(self.bend_stiff)
+		I = np.sum(self.Inertia)
 		GA = np.sum(self.shear_stiff)
 		y1 = self.element_pos[:, 1]
 		y2 = self.element_pos[:, 3]
@@ -152,6 +154,8 @@ class Fuselage:
 		LamStrains = np.zeros((3, self.nElem))
 		LamStrains[0, :] = ex
 		LamStrains[2, :] = exy
+		Stress = np.zeros([3,self.nElem])
+		Stress[0,:] = ex *EI/I
 		Failed = np.zeros(self.nElem)
 		for i in range(self.nElem):
 			lam = self.laminates[i]
@@ -168,13 +172,39 @@ class Fuselage:
 				temp = max(a, b)
 				d = max(c, temp)
 			Failed[i] = d
+		for i in range(self.nElem):
+			#	Buckling with stiffners
+			if self.Stiffeners == True:
+				#Check for stiffener crippling
+				b = 2 * np.pi / self.nNodes * self.dia / 2  # Widt of element
+				As = [] # Insert Aerea of the stiffeners!!!
+				if Stress[0,i] >= StiffenerCrippling()[1]/As[i]:
+					print("Failure Stiffener Crippling", i, Stress[0,:]/ StiffenerCrippling()[1]/(t[i]*b))
+				#Check for skin buckling due to compression
+				if Stress[0,:] >= SkinBuckling()[0]/(t[i]*b):
+					print("Failure Skin Buckling", i, Stress[0,:]/ SkinBuckling()[0]/(t[i]*b))
+				# Check for skin buckling due to shear
+				if ShearFlow() >= SkinBuckling()[1]:
+					print("Failure Skin due to shear", i, ShearFlow() / SkinBuckling()[1])
+			elif self.Metal == False:
+				b = self.dia*np.pi*3/16 #Length of element without stiffeners
+				#Check for skin buckling due to compression
+				if Stress[0,:] >= SkinBuckling()[0]/(t[i]*b):
+					print("Failure Skin Buckling", i, Stress[0,:]/ SkinBuckling()[0]/(t[i]*b))
+				# Check for skin buckling due to shear
+				if ShearFlow() >= SkinBuckling()[1]:
+					print("Failure Skin due to shear", i, ShearFlow() / SkinBuckling()[1])
 		if plot_failure:
 			self.PlotNodes(Failed)
 		return Failed
 
-	def ShearFlow(self, load):
-		sy = load
-		b = 2 * np.pi / self.nNodes * self.dia / 2
+	def ShearFlow(self):
+		sy = 1.5*10**6
+		if self.Stiffeners == True:
+
+			b = 2*np.pi/self.nNodes*D/2
+		else:
+			b = np.pi*self.dia*3/16
 		# Structural Idealization
 		angle = np.arange(0,360,self.dTheta)
 		t = self.thickness
@@ -228,7 +258,11 @@ class Fuselage:
 	def SkinBuckling(self):
 		#Compression
 		a = 1 #Length
-		b = 2*np.pi/self.nNodes*D/2
+		if self.Stiffeners == True:
+
+			b = 2*np.pi/self.nNodes*D/2
+		else:
+			b = np.pi*self.dia*3/16
 		AR = a/b
 		m = 2 #???
 		D11 = self.ABD[3,3]
@@ -246,7 +280,7 @@ class Fuselage:
 		NShear = 4*(D11*D22**3)**0.25*K/b**2
 		return NCom, NShear
 
-	def StiffenerCrippling(self, load):
+	def StiffenerCrippling(self):
 
 		if StiffCond == 0:	#OEF
 			Sig_OEFr = 1.63/((b/t)**0.717)	#Ratio of crippling strength to compressive strength of stiffner
@@ -293,4 +327,4 @@ Lam3 = Laminate(TensionLam, AssignmentLamina)
 # nelem should be divisible by 2 and divisible by sum of ratio
 nelem = 30
 a = Fuselage([Lam1, Lam2, Lam3], ratio = [1,1,1], Stiffeners = False, dTheta = 360//nelem, rho = 1610)
-print(a.ShearFlow(1.5*10**6))
+print(a.ShearFlow())
