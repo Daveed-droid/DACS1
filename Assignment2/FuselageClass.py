@@ -32,17 +32,21 @@ class Fuselage:
 		self.element_ang = []
 		self.thickness = []
 		self.Material = Material
-		for i in range(self.nNodes-1):
-			self.element_pos.append([self.x[i], self.y[i], self.x[i+1], self.y[i+1]])
-			self.element_ang.append(-(90+((Theta[i]+Theta[i+1])/2)))
 
-			if i/self.nNodes <= self.ratio[0] /np.sum(self.ratio)/2:
-				print(i, self.ratio,self.nNodes,self.thickness,self.Material[0].h)
+
+		# for i in range((self.nNodes-1):
+			# self.element_pos.append([self.x[i], self.y[i], self.x[i+1], self.y[i+1]])
+			# self.element_ang.append(-(90+((Theta[i]+Theta[i+1])/2)))
+			# self.element_pos = np.asarray(self.element_pos, dtype = float)
+		for i in range(int((self.nNodes-1)/2)):
+			if i/self.nNodes < self.ratio[0] /np.sum(self.ratio)/2:
+				#print(i, self.ratio,self.nNodes,self.thickness,self.Material[0].h)
 				self.thickness.append(self.Material[0].h)
-			elif len(ratio) > 1 and self.ratio[0] /np.sum(self.ratio)/2  <i/self.nNodes <=  (self.ratio[1]+self.ratio[0]) /np.sum(self.ratio)/2:
-				self.thickness[i] = self.Material[1].h
+			elif len(ratio) > 1 and self.ratio[0] /np.sum(self.ratio)/2  <= i/self.nNodes <  (self.ratio[1]+self.ratio[0]) /np.sum(self.ratio)/2:
+				self.thickness.append(self.Material[1].h)
 			elif len(ratio) > 2:
-				self.thickness[i] = self.Material[1].h
+				self.thickness.append(self.Material[2].h)
+		self.thickness = np.append(self.thickness, np.flip(self.thickness))
 
 
 		self.element_pos = np.asarray(self.element_pos, dtype = float)
@@ -82,6 +86,7 @@ class Fuselage:
 				axial_stiff += Ex*h*l
 				temp += Ex*h*l*((y1+y2)/2)
 			self.y_neutral_axis = temp/axial_stiff
+
 			# Setting bending stiffness
 			for i in range(self.nElem):
 				x1, y1, x2, y2 = self.element_pos[i, :]
@@ -170,51 +175,53 @@ class Fuselage:
 		return Failed
 
 	def ShearFlow(self, load):
-		b = 2 * np.pi / self.nNodes * D / 2
+		sy = load
+		b = 2 * np.pi / self.nNodes * self.dia / 2
 		# Structural Idealization
 		angle = np.arange(0,360,self.dTheta)
 		t = self.thickness
 		B = []
-		qb = []
-		qs = []
-		qm = []
+		qb = np.zeros(self.nElem)
+		qs = np.zeros(self.nElem)
+		qm = np.zeros(self.nElem)
 		As = [0,0,0] # Stiffener area
 		if self.Metal == True:
+
 			t = self.Material[0].h
-			for i in range(self.nNodes/2):
-				B[i] = t[i]*b*(2+self.y[i-1]/self.y[i]) + t[i]*b*(2+self.y[i+1]/self.y[i])
-				B[i+self.nNodes/2] = B[i]
-
+			for i in range(self.nElem):
+				B.append(t*b*(2+self.y[i-1]/self.y[i])/6 + t*b*(2+self.y[i+1]/self.y[i])/6)
 		elif self.Stiffeners == False:
-			for i in range(self.nNodes):
-				B[i] = t[i]*b*(2+self.y[i-1]/self.y[i]) + t[i]*b*(2+self.y[i+1]/self.y[i])
-				B[i+self.nNodes/2] = B[i]
 
+			for i in range(self.nElem):
+				B.append(t[i]*b*(2+self.y[i-1]/self.y[i])/6 + t[i]*b*(2+self.y[i+1]/self.y[i])/6)
 
 		else:
-			for i in range(self.nNodes):
-				B[i] = As[i] + t[i]*b*(2+self.y[i-1]/self.y[i]) + t[i]*b*(2+self.y[i+1]/self.y[i])
-				B[i+self.nNodes/2] = B[i]
+
+			for i in range(self.nElem):
+				B.append(As[i] + t[i]*b*(2+self.y[i-1]/self.y[i])/6 + t[i]*b*(2+self.y[i+1]/self.y[i])/6)
+
+
+		# print(B)
 
 		if self.Metal == True:
 			Ixx = (D**4-(D-2*t)**4)*3.1415/64
 		elif self.Stiffeners == False:
-			Ixx = np.sum(self.y**2(*self.thickness*b))
+			Ixx = np.sum(self.y[0:-1]**2*(self.thickness*b))
 
 		else:
-			Ixx = np.sum(self.y ** 2*(self.thickness*(b)+As))
+			Ixx = np.sum(self.y[0:-1] ** 2*(self.thickness*(b)+As))
 			pass
 
-		for i in range(self.nNodes/2):
-			qb[i] = B[i]+self.y[i]*-sy*Ixx
-			qm[i] = -qb[i]*(self.x[i+1]-self.x[i]*self.y[i]+qb[i]*(self.y[i+1]-self.y[i])*x[i])
-			qb[i+self.nNodes/2] = -qb[i]
-			qm[i+self.nNodes/2] = -qm[i]
+		for i in range(self.nElem):
+			qb[i] = B[i]+self.y[i]*-sy*Ixx+qb[i-1]
 
-		qs0 = np.sum(qm) / (2*np.pi*(self.dia/2)**2)
+			qm[i] = -qb[i]*(self.x[i+1]-self.x[i]*self.y[i]+qb[i]*(self.y[i+1]-self.y[i])*self.x[i])
+			#print(qb[i],qm[i],self.x[i],self.y[i])
+
+		qs0 = 0	#np.sum(qm) / (2*np.pi*(self.dia/2)**2)
 		qs = qb + qs0
 
-
+		#print(np.sum(qm),qs0, qb,self.y[0])
 
 
 
@@ -231,15 +238,15 @@ class Fuselage:
 		D12 = self.ABD[3,4]
 		D22 = self.ABD[4,4]
 
-		NCom = (np.pi**2(D11*m**4+2*(D12+2*D66)*m**2*AR**2+D22*AR**4))/(a**2*m**2)
+		NCom = (np.pi**2*(D11*m**4+2*(D12+2*D66)*m**2*AR**2+D22*AR**4))/(a**2*m**2)
 
 		#Shear
 		A = -0.27 + 0.185*(D12+2*D66)/(D11*D22)**0.5
-		B = 0.82+0.46*(D12+2*D66)/(D11*D22)-0.2((D12+2*D66)/(D11*D66)**0.5)**2
+		B = 0.82+0.46*(D12+2*D66)/(D11*D22)-0.2*((D12+2*D66)/(D11*D66)**0.5)**2
 		beta = (D11/D22)**0.25
 		K = 8.2 + 5*(D12+2*D66)/((D11*D22)**0.5*(A/beta+B*beta))
 		NShear = 4*(D11*D22**3)**0.25*K/b**2
-		return NCom, N
+		return NCom, NShear
 
 	def StiffenerCrippling(self, load):
 
@@ -254,6 +261,7 @@ class Fuselage:
 
 		return Sig_stif, Nxstif
 
+"""
 if __name__ == "__main__":
 	CompLam = [0, 0, 0]
 	ShearLam = [45, -45, 45, -45]
@@ -276,3 +284,15 @@ if __name__ == "__main__":
 	a.PlotNodes()
 	a.Load(15e6, 1.5e6, plot_failure = True)
 	print(a.mass)
+"""
+
+CompLam = [0, 0, 0]
+ShearLam = [45, -45, 45, -45]
+TensionLam = [0, 0, 0]
+Lam1 = Laminate(CompLam, AssignmentLamina)
+Lam2 = Laminate(ShearLam, AssignmentLamina)
+Lam3 = Laminate(TensionLam, AssignmentLamina)
+# nelem should be divisible by 2 and divisible by sum of ratio
+nelem = 30
+a = Fuselage([Lam1, Lam2, Lam3], ratio = [1,1,1], Stiffeners = False, dTheta = 360//nelem, rho = 1610)
+print(a.ShearFlow(1.5*10**6))
