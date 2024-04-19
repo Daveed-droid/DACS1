@@ -221,9 +221,13 @@ class Fuselage:
 			self.PlotNodes(Failed)
 		return Failed
 
-	def ShearFlow(self, load):
-		sy = load
-		b = 2 * np.pi / self.nNodes * self.dia / 2
+	def ShearFlow(self):
+		sy = 1.5*10**6
+		if self.Stiffeners == True:
+
+			b = 2*np.pi/self.nNodes*D/2
+		else:
+			b = np.pi*self.dia*3/16
 		# Structural Idealization
 		angle = np.arange(0,360,self.dTheta)
 		t = self.thickness
@@ -277,7 +281,11 @@ class Fuselage:
 	def SkinBuckling(self):
 		#Compression
 		a = 1 #Length
-		b = 2*np.pi/self.nNodes*D/2
+		if self.Stiffeners == True:
+
+			b = 2*np.pi/self.nNodes*D/2
+		else:
+			b = np.pi*self.dia*3/16
 		AR = a/b
 		m = 2 #???
 		D11 = self.ABD[3,3]
@@ -295,7 +303,7 @@ class Fuselage:
 		NShear = 4*(D11*D22**3)**0.25*K/b**2
 		return NCom, NShear
 
-	def StiffenerCrippling(self, load):
+	def StiffenerCrippling(self):
 
 		if StiffCond == 0:	#OEF
 			Sig_OEFr = 1.63/((b/t)**0.717)	#Ratio of crippling strength to compressive strength of stiffner
@@ -342,25 +350,4 @@ Lam3 = Laminate(TensionLam, AssignmentLamina)
 # nelem should be divisible by 2 and divisible by sum of ratio
 nelem = 30
 a = Fuselage([Lam1, Lam2, Lam3], ratio = [1,1,1], Stiffeners = False, dTheta = 360//nelem, rho = 1610)
-print(a.ShearFlow(1.5*10**6))
-
-
-CompLam = [0, 0, 0]
-ShearLam = [45, -45, 45, -45]
-TensionLam = [0, 0, 0]
-Lam1 = Laminate(CompLam, AssignmentLamina)
-Lam2 = Laminate(ShearLam, AssignmentLamina)
-Lam3 = Laminate(TensionLam, AssignmentLamina)
-Lamf = Laminate(CompLam, AssignmentLamina)
-Lamw = Laminate(ShearLam, AssignmentLamina)
-stifh = Stiffener(Lamw, Lamf, "hat")
-# nelem should be divisible by 2 and divisible by sum of ratio
-nelem = 30
-nnode = nelem+1 # where last and first are the same, dont set stiff on last node
-stifList = [
-	[30, stifh],
-	[60, stifh]
-]
-
-a = Fuselage([Lam1, Lam2, Lam3], ratio = [1,1,1], Stiffeners = False, dTheta = 360//nelem, rho = 1610)
-print(a.ShearFlow(1.5*10**6))
+print(a.ShearFlow())
