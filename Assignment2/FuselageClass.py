@@ -35,7 +35,7 @@ class Fuselage:
 		for i in range(self.nNodes-1):
 			self.element_pos.append([self.x[i], self.y[i], self.x[i+1], self.y[i+1]])
 			self.element_ang.append(-(90+((Theta[i]+Theta[i+1])/2)))
-			
+
 			if i/self.nNodes <= self.ratio[0] /np.sum(self.ratio)/2:
 				print(i, self.ratio,self.nNodes,self.thickness,self.Material[0].h)
 				self.thickness.append(self.Material[0].h)
@@ -45,7 +45,7 @@ class Fuselage:
 				self.thickness[i] = self.Material[1].h
 
 
-			self.element_pos = np.asarray(self.element_pos, dtype = float)
+		self.element_pos = np.asarray(self.element_pos, dtype = float)
 
 
 		A = 0
@@ -168,7 +168,7 @@ class Fuselage:
 		if plot_failure:
 			self.PlotNodes(Failed)
 		return Failed
-"""
+
 	def ShearFlow(self, load):
 		b = 2 * np.pi / self.nNodes * D / 2
 		# Structural Idealization
@@ -253,7 +253,7 @@ class Fuselage:
 			Nxstif = 2*3.1415**2/b**2*((D11*D22)**0.5+D12+2*D66)
 
 		return Sig_stif, Nxstif
-"""
+
 if __name__ == "__main__":
 	CompLam = [0, 0, 0]
 	ShearLam = [45, -45, 45, -45]
