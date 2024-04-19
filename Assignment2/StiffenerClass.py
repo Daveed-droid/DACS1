@@ -31,12 +31,14 @@ class Stiffener():
 	def __init__(self, LaminateWeb, LaminateFlange, CrossSection, angle = 0):
 		tw, tf = LaminateWeb.h/2, LaminateFlange.h/2
 		self.LaminateWeb, self.LaminateFlange = LaminateWeb, LaminateFlange
+		self.buckProp = 0
 		if CrossSection == "L":
 			self.Flange = [True, False]
 			self.midlines = np.zeros((4, 2))
 			self.midlines[:, 0] = np.array([0, 0, 0.04, 0])
 			self.midlines[:, 1] = np.array([0, 0+tf, 0, 0.04])
 			self.midlines += tf
+			self.buckProp = [["OEF", 0.04-tf, self.LaminateWeb]]
 		elif CrossSection == "I":
 			self.Flange = [True, False, True]
 			self.midlines = np.zeros((4, 3))
@@ -44,6 +46,8 @@ class Stiffener():
 			self.midlines[:, 1] = np.array([0, 0+tf, 0, 0.02-tf])
 			self.midlines[:, 2] = np.array([-0.02, 0.02, 0.02, 0.02])
 			self.midlines += tf
+			self.buckProp = [["NEF", 0.02-2*tf, self.LaminateWeb],
+							 ["OEF", 0.02-2*tw, self.LaminateFlange]]
 		elif CrossSection == "hat":
 			self.Flange = [True, False, False, True]
 			self.midlines = np.zeros((4, 4))
@@ -52,6 +56,8 @@ class Stiffener():
 			self.midlines[:, 2] = np.array([0.02-tf, 0+tf, 0.01+tf, 0.02-tf])
 			self.midlines[:, 3] = np.array([-0.01, 0.02, 0.01, 0.02])
 			self.midlines += tf
+			self.buckProp = [["NEF", 0.02-2*tw, self.LaminateFlange],
+							 ["NEF", (0.01**2+0.02**2)**0.5-2*tf, self.LaminateWeb]]
 		else:
 			raise TypeError
 

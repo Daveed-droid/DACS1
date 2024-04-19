@@ -303,35 +303,41 @@ class Fuselage:
 		NShear = 4*(D11*D22**3)**0.25*K/b**2
 		return NCom, NShear
 
-	def StiffenerCrippling(self):
+	def StiffenerCrippling(self, Stiff):
+		b = Stiff.buckProp[1]
+		StiffCond = Stiff.buckProp[0]
+		LamStiffElem = Stiff.buckProp[2]
+		D66 = LamStiffElem.ABD[5,5]
 
-		if StiffCond == 0:	#OEF
+		if StiffCond == "OEF":	#OEF
 			Sig_OEFr = 1.63/((b/t)**0.717)	#Ratio of crippling strength to compressive strength of stiffner
 			Sig_stif = Sig_OEFr * XcStif
 			Nxstif = 12*D66/b**2
-		else:	#NEF
+		elif StiffCond == "NEF":	#NEF
 			Sig_stifr = 11/((b/t)**1.124)	#Ratio of crippling strength to compressive strength of stiffner
 			Sig_stif = Sig_NEFr * XCStif
 			Nxstif = 2*3.1415**2/b**2*((D11*D22)**0.5+D12+2*D66)
+		else:
+			raise NotImplementedError
 
 		return Sig_stif, Nxstif
 
-"""
 if __name__ == "__main__":
-	CompLam = [0, 0, 0]
-	ShearLam = [45, -45, 45, -45]
-	TensionLam = [0, 0, 0]
-	Lam1 = Laminate(CompLam, AssignmentLamina)
-	Lam2 = Laminate(ShearLam, AssignmentLamina)
-	Lam3 = Laminate(TensionLam, AssignmentLamina)
-	# nelem should be divisible by 2 and divisible by sum of ratio
-	nelem = 30
-	a = Fuselage([Lam1, Lam2, Lam3], ratio = [1,1,1], Stiffeners = False, dTheta = 360//nelem, rho = 1610)
-	a.PlotNodes()
-	a.Load(15e6, 1.5e6, plot_failure = True)
-	print(a.mass)
+	# CompLam = [0, 0, 0]
+	# ShearLam = [45, -45, 45, -45]
+	# TensionLam = [0, 0, 0]
+	# Lam1 = Laminate(CompLam, AssignmentLamina)
+	# Lam2 = Laminate(ShearLam, AssignmentLamina)
+	# Lam3 = Laminate(TensionLam, AssignmentLamina)
+	# # nelem should be divisible by 2 and divisible by sum of ratio
+	# nelem = 30
+	# a = Fuselage([Lam1, Lam2, Lam3], ratio = [1,1,1], Stiffeners = False, dTheta = 360//nelem, rho = 1610)
+	# a.PlotNodes()
+	# a.Load(15e6, 1.5e6, plot_failure = True)
+	# print(a.mass)
 
-	t = 1.5e-3
+	nelem = 30
+	t = 1.43e-3
 	AssignmentMetalLamina = Lamina(t, 69e9, 69e9, 0.29, 26e9)
 	AssignmentMetalLamina.setStrengths(410e6, 400e6, 430e6, 430e6, 230e6)
 	Lam = Laminate([0], AssignmentMetalLamina)
@@ -339,15 +345,18 @@ if __name__ == "__main__":
 	a.PlotNodes()
 	a.Load(15e6, 1.5e6, plot_failure = True)
 	print(a.mass)
-"""
 
-CompLam = [0, 0, 0]
-ShearLam = [45, -45, 45, -45]
-TensionLam = [0, 0, 0]
-Lam1 = Laminate(CompLam, AssignmentLamina)
-Lam2 = Laminate(ShearLam, AssignmentLamina)
-Lam3 = Laminate(TensionLam, AssignmentLamina)
-# nelem should be divisible by 2 and divisible by sum of ratio
-nelem = 30
-a = Fuselage([Lam1, Lam2, Lam3], ratio = [1,1,1], Stiffeners = False, dTheta = 360//nelem, rho = 1610)
-print(a.ShearFlow())
+	CompLam = [0, 0, 0]
+	ShearLam = [45, -45, 45, -45]
+	TensionLam = [0, 0, 0]
+	Lam1 = Laminate(CompLam, AssignmentLamina)
+	Lam2 = Laminate(ShearLam, AssignmentLamina)
+	Lam3 = Laminate(TensionLam, AssignmentLamina)
+	LamF = Laminate(, AssignmentLamina)
+	LamW = Laminate(, AssignmentLamina)
+	# nelem should be divisible by 2 and divisible by sum of ratio
+	nelem = 30
+	a = Fuselage([Lam1, Lam2, Lam3], ratio = [1,1,1], Stiffeners = False, dTheta = 360//nelem, rho = 1610)
+	a.PlotNodes()
+	a.Load(15e6, 1.5e6, plot_failure = True)
+	print(a.mass)
