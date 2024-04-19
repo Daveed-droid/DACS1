@@ -173,27 +173,30 @@ class Fuselage:
 				d = max(c, temp)
 			Failed[i] = d
 		for i in range(self.nElem):
+
 			#	Buckling with stiffners
 			if self.Stiffeners == True:
 				#Check for stiffener crippling
 				b = 2 * np.pi / self.nNodes * self.dia / 2  # Widt of element
 				As = [] # Insert Aerea of the stiffeners!!!
 				if Stress[0,i] >= StiffenerCrippling()[1]/As[i]:
-					print("Failure Stiffener Crippling", i, Stress[0,:]/ StiffenerCrippling()[1]/(t[i]*b))
+					print("Failure Stiffener Crippling", i, Stress[0,i]/ StiffenerCrippling()[1]/(t[i]*b))
 				#Check for skin buckling due to compression
-				if Stress[0,:] >= SkinBuckling()[0]/(t[i]*b):
-					print("Failure Skin Buckling", i, Stress[0,:]/ SkinBuckling()[0]/(t[i]*b))
+				if Stress[0,i] >= SkinBuckling()[0]/(t[i]*b):
+					print("Failure Skin Buckling", i, Stress[0,i]/ SkinBuckling()[0]/(t[i]*b))
 				# Check for skin buckling due to shear
 				if ShearFlow() >= SkinBuckling()[1]:
-					print("Failure Skin due to shear", i, ShearFlow() / SkinBuckling()[1])
-			elif self.Metal == False:
+					print("Failure Skin due to shear", i, ShearFlow()[i] / SkinBuckling()[1])
+			else:
 				b = self.dia*np.pi*3/16 #Length of element without stiffeners
 				#Check for skin buckling due to compression
-				if Stress[0,:] >= SkinBuckling()[0]/(t[i]*b):
-					print("Failure Skin Buckling", i, Stress[0,:]/ SkinBuckling()[0]/(t[i]*b))
+				if Stress[0,i] >= self.SkinBuckling()[0]/(t[i]*b):
+					print("Failure Skin Buckling", i, Stress[0,i]/ self.SkinBuckling()[0]/(t[i]*b))
 				# Check for skin buckling due to shear
-				if ShearFlow() >= SkinBuckling()[1]:
-					print("Failure Skin due to shear", i, ShearFlow() / SkinBuckling()[1])
+				if self.ShearFlow()[i] >= self.SkinBuckling()[1]:
+					print("Failure Skin due to shear", i, self.ShearFlow()[i] / self.SkinBuckling()[1])
+
+
 
 		if plot_failure:
 			self.PlotNodes(Failed)
@@ -231,7 +234,7 @@ class Fuselage:
 
 
 		# print(B)
-
+		D = self.dia
 		if self.Metal == True:
 			Ixx = (D**4-(D-2*t)**4)*3.1415/64
 		elif self.Stiffeners == False:
@@ -294,7 +297,7 @@ class Fuselage:
 
 		return Sig_stif, Nxstif
 
-"""
+
 if __name__ == "__main__":
 	CompLam = [0, 0, 0]
 	ShearLam = [45, -45, 45, -45]
@@ -317,7 +320,7 @@ if __name__ == "__main__":
 	a.PlotNodes()
 	a.Load(15e6, 1.5e6, plot_failure = True)
 	print(a.mass)
-"""
+
 
 CompLam = [0, 0, 0]
 ShearLam = [45, -45, 45, -45]
