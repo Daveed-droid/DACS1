@@ -231,20 +231,19 @@ class Fuselage:
 				#Check for stiffener crippling
 				b = 2 * np.pi / self.nNodes * self.dia / 2  # Widt of element
 				As = [] # Insert Aerea of the stiffeners!!!
-				if Stress[0,i] >= StiffenerCrippling()[1]/As[i]:
-					print("Failure Stiffener Crippling", i, Stress[0,i]/ (StiffenerCrippling()[1]/(t[i]*b)))
+				if Stress[0,i] >= self.StiffenerCrippling()[1]/As[i]:
+					print("Failure Stiffener Crippling", i, Stress[0,i]/ (self.StiffenerCrippling()[1]/(t[i]*b)))
 				#Check for skin buckling due to compression
-				if Stress[0,i] >= SkinBuckling()[0]/(t[i]*b):
-					print("Failure Skin Buckling Composite stiffener", i, Stress[0,i]/ (SkinBuckling()[0]/(t[i]*b)))
+				if Stress[0,i] >= self.SkinBuckling()[0]/(t[i]*b):
+					print("Failure Skin Buckling Composite stiffener", i, Stress[0,i]/ (self.SkinBuckling()[0]/(t[i]*b)))
 				# Check for skin buckling due to shear
-				if ShearFlow()[i] >= SkinBuckling()[1]:
-					print("Failure Skin due to shear Composite stiffener", i, ShearFlow()[i] / SkinBuckling()[1])
+				if self.ShearFlow()[i] >= self.SkinBuckling()[1]:
+					print("Failure Skin due to shear Composite stiffener", i, self.ShearFlow()[i] / self.SkinBuckling()[1])
 			else:
 				b = self.dia*np.pi*3/16 #Length of element without stiffeners
 				#Check for skin buckling due to compression
 				if Stress[0,i] >= self.SkinBuckling()[0]/(t[i]*b):
-					print("Failure Skin Buckling", i, Stress[0,i], (self.SkinBuckling()[0]/(t[i]*b)) )
-				print(self.stiffenerElem)
+					print("Failure Skin Buckling", i, Stress[0,i]/ (self.SkinBuckling()[0]/(t[i]*b)) )
 				# Check for skin buckling due to shear
 				if self.ShearFlow()[i] >= self.SkinBuckling()[1]/t[i]:
 					print("Failure Skin due to shear", i, self.ShearFlow()[i] / (self.SkinBuckling()[1]/t[i]))
@@ -380,29 +379,29 @@ class Fuselage:
 
 
 if __name__ == "__main__":
-	# CompLam = [0, 0, 0]
-	# ShearLam = [45, -45, 45, -45]
-	# TensionLam = [0, 0, 0]
-	# Lam1 = Laminate(CompLam, AssignmentLamina)
-	# Lam2 = Laminate(ShearLam, AssignmentLamina)
-	# Lam3 = Laminate(TensionLam, AssignmentLamina)
-	# # nelem should be divisible by 2 and divisible by sum of ratio
-	# nelem = 30
-	# a = Fuselage([Lam1, Lam2, Lam3], ratio = [1,1,1], Stiffeners = False, dTheta = 360//nelem, rho = 1610)
-	# a.PlotNodes()
-	# a.Load(15e6, 1.5e6, plot_failure = True)
-	# print(a.mass)
+	CompLam = [0, 0, 0]
+	ShearLam = [45, -45, 45, -45]
+	TensionLam = [0, 0, 0]
+	Lam1 = Laminate(CompLam, AssignmentLamina)
+	Lam2 = Laminate(ShearLam, AssignmentLamina)
+	Lam3 = Laminate(TensionLam, AssignmentLamina)
+	# nelem should be divisible by 2 and divisible by sum of ratio
+	nelem = 30
+	a = Fuselage([Lam1, Lam2, Lam3], ratio = [1,1,1], Stiffeners = False, dTheta = 360//nelem, rho = 1610)
+	a.PlotNodes()
+	a.Load(15e6, 1.5e6, plot_failure = True)
+	print(a.mass)
 
-	# nelem = 30
-	# t = 1.43e-3
-	# AssignmentMetalLamina = Lamina(t, 69e9, 69e9, 0.29, 26e9)
-	# AssignmentMetalLamina.setStrengths(410e6, 400e6, 430e6, 430e6, 230e6)
-	# Lam = Laminate([0], AssignmentMetalLamina)
-	# a = Fuselage([Lam], [1], Stiffeners = False, dTheta = 360 // nelem, Metal = True, rho = 2770)
-	# a.PlotNodes()
-	# a.Load(15e6, 1.5e6, plot_failure = True)
-	# print(a.mass)
-
+	nelem = 30
+	t = 1.43e-3
+	AssignmentMetalLamina = Lamina(t, 69e9, 69e9, 0.29, 26e9)
+	AssignmentMetalLamina.setStrengths(410e6, 400e6, 430e6, 430e6, 230e6)
+	Lam = Laminate([0], AssignmentMetalLamina)
+	a = Fuselage([Lam], [1], Stiffeners = False, dTheta = 360 // nelem, Metal = True, rho = 2770)
+	a.PlotNodes()
+	a.Load(15e6, 1.5e6, plot_failure = True)
+	print(a.mass)
+	"""
 	CompLam = [0, 0, 0]
 	ShearLam = [45, -45, 45, -45]
 	TensionLam = [0, 0, 0]
@@ -429,3 +428,4 @@ if __name__ == "__main__":
 	a.PlotNodes()
 	a.Load(15e6, 1.5e6, plot_failure = True)
 	print(a.mass)
+	"""
