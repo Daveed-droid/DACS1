@@ -381,11 +381,22 @@ if __name__ == "__main__":
 	Lam1 = Laminate(CompLam, AssignmentLamina)
 	Lam2 = Laminate(ShearLam, AssignmentLamina)
 	Lam3 = Laminate(TensionLam, AssignmentLamina)
-	LamF = Laminate(, AssignmentLamina)
-	LamW = Laminate(, AssignmentLamina)
+	LamF = Laminate(CompLam, AssignmentLamina)
+	LamW = Laminate(ShearLam, AssignmentLamina)
+	StringH = Stiffener(LamW, LamF, "hat")
+	StringL = Stiffener(LamW, LamF, "L")
+	StringI = Stiffener(LamW, LamF, "I")
+
 	# nelem should be divisible by 2 and divisible by sum of ratio
 	nelem = 30
-	a = Fuselage([Lam1, Lam2, Lam3], ratio = [1,1,1], Stiffeners = False, dTheta = 360//nelem, rho = 1610)
+	A = nelem//6
+	B = [[(360//nelem)*i, StringH] for i in range(A)]
+	i = len(B)
+	C = [[(360//nelem)*(j+i), StringI] for j in range(1,A)]
+	j = len(C)
+	D = [[(360//nelem)*(k+j), StringL] for k in range(1,A)]
+	E = B + C + D
+	a = Fuselage([Lam1, Lam2, Lam3], ratio = [1,1,1], Stiffeners = E, dTheta = 360//nelem, rho = 1610)
 	a.PlotNodes()
 	a.Load(15e6, 1.5e6, plot_failure = True)
 	print(a.mass)

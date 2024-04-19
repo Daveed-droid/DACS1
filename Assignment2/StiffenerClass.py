@@ -150,7 +150,7 @@ class Stiffener():
 if __name__=="__main__":
 	Lamw = Laminate([0, 0, 0], AssignmentLamina)
 	Lamf = Laminate([0, 0, 0], AssignmentLamina)
-	Stif = Stiffener(Lamw, Lamf, "hat", angle = 30)
+	Stif = Stiffener(Lamw, Lamf, "I", angle = 0)
 	mid = Stif.midlines
 	fig, ax = plt.subplots()
 	for i in range(len(mid[0])):
