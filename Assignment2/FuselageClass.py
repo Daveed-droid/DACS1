@@ -1,5 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
+
+from Assignment2.StiffenerClass import Stiffener
 from LaminateClass import Laminate
 from LaminaClass import Lamina
 from Assignment2.Assignment2Data import Metal, AssignmentLamina, AssignmentMetal
@@ -15,7 +17,7 @@ def Rx(theta):
 
 
 class Fuselage:
-	def __init__(self, Material, ratio = [1, 1, 1], Stiffeners: bool = False, Metal = False, dTheta = 20, rho = 0):
+	def __init__(self, Material, ratio = [1, 1, 1], Stiffeners: bool or list = False, Metal = False, dTheta = 20, rho = 0):
 		dia = 6
 		self.dia = dia
 		self.Metal = Metal
@@ -31,7 +33,23 @@ class Fuselage:
 		self.element_pos = []
 		self.element_ang = []
 		self.thickness = []
+		self.stiffenerElem = []
 		self.Material = Material
+		if self.Stiffeners:
+
+			self.stiffener_pos = []
+			for i in range(len(Stiffeners)):
+				x_stiff = -dia/2 * np.cos(np.deg2rad(self.Stiffeners[i][0]))
+				y_stiff = dia/2 * np.sin(np.deg2rad(self.Stiffeners[i][0]))
+				stiff_L = self.Stiffeners[i][1].set_angle(-self.Stiffeners[i][0])
+				stiff_R = self.Stiffeners[i][1].set_angle(self.Stiffeners[i][0])
+				self.stiffenerElem.append(stiff_L)
+				self.stiffenerElem.append(stiff_R)
+				stiffner_pos_left = [x_stiff+stiff_L.x_cg, y_stiff+stiff_L.y_cg]
+				stiffner_pos_right = [-x_stiff+stiff_R.x_cg, y_stiff+stiff_R.y_cg]
+				self.stiffener_pos.append(stiffner_pos_right)
+				self.stiffener_pos.append(stiffner_pos_left)
+			self.stiffener_pos = np.asarray(self.stiffener_pos)
 
 
 		for i in range((self.nNodes-1)):
@@ -55,7 +73,8 @@ class Fuselage:
 			t = self.Material[i].h
 			A += np.pi*((dia/2 + t/2)**2-(dia/2 - t/2)**2)*self.ratio[i]/sum(self.ratio)
 			if Stiffeners:
-				raise NotImplementedError
+				for i in range(len(self.stiffenerElem)):
+					A += self.stiffenerElem[i].A
 		self.mass = A*rho
 		if type(Material) == list:
 			self.laminates = []
@@ -66,10 +85,12 @@ class Fuselage:
 			for i in range(len(self.Material)):
 				self.laminates += [self.Material[i]]*(perRatio*ratio[i])
 			self.laminates = self.laminates + list(reversed(self.laminates))
-			# Calc ABD
-			self.ABD = np.zeros((6,6), dtype = float)
-			self.bend_stiff = np.zeros(self.nElem)
-			self.shear_stiff = np.zeros(self.nElem)
+			if Stiffeners:
+				self.bend_stiff = np.zeros(self.nElem+len(self.stiffenerElem))
+				self.shear_stiff = np.zeros(self.nElem+len(self.stiffenerElem))
+			else:
+				self.bend_stiff = np.zeros(self.nElem)
+				self.shear_stiff = np.zeros(self.nElem)
 			axial_stiff = 0
 			temp = 0
 			# Finding neutral axis and setting shear stiffness
@@ -83,6 +104,16 @@ class Fuselage:
 				# Find neutral axis
 				axial_stiff += Ex*h*l
 				temp += Ex*h*l*((y1+y2)/2)
+			if Stiffeners:
+				for j in range(len(self.stiffenerElem)):
+					index = i+j
+					stiff = self.stiffenerElem[j]
+					x, y = self.stiffener_pos[j]
+					axial_stiff += stiff.EA
+					temp += stiff.EA*(y)
+					self.shear_stiff[index] = stiff.GA
+
+
 			self.y_neutral_axis = temp/axial_stiff
 
 			# Setting bending stiffness
@@ -93,6 +124,12 @@ class Fuselage:
 				l = np.linalg.norm(np.array([x2, y2]).T - np.array([x1, y1]).T)
 				# Adding steiner term
 				self.bend_stiff[i] = Ex*h*l*(((y1+y2)/2)-self.y_neutral_axis)**2
+			if Stiffeners:
+				for j in range(len(self.stiffenerElem)):
+					index = i+j
+					stiff = self.stiffenerElem[j]
+					x, y = self.stiffener_pos[j]
+					self.bend_stiff[index] = stiff.EA * (y - self.y_neutral_axis) ** 2
 		else:
 			print("Invalid")
 
@@ -168,6 +205,18 @@ class Fuselage:
 				temp = max(a, b)
 				d = max(c, temp)
 			Failed[i] = d
+		if self.Stiffeners:
+			stif_pos = np.asarray(self.stiffener_pos)
+			y = stif_pos[:, 1]
+			ex = moment*(y-self.y_neutral_axis)/EI
+			exy = shear/GA
+			self.FailedStiffners = []
+			for i in range(len(self.stiffenerElem)):
+				LamStrains = np.zeros((3, 1))
+				LamStrains[0, :] = ex[i]
+				LamStrains[2, :] = exy
+				FailLam = self.stiffenerElem[i].get_fpf(LamStrains)
+				self.FailedStiffners.append(max(FailLam))
 		if plot_failure:
 			self.PlotNodes(Failed)
 		return Failed
@@ -292,5 +341,26 @@ Lam2 = Laminate(ShearLam, AssignmentLamina)
 Lam3 = Laminate(TensionLam, AssignmentLamina)
 # nelem should be divisible by 2 and divisible by sum of ratio
 nelem = 30
+a = Fuselage([Lam1, Lam2, Lam3], ratio = [1,1,1], Stiffeners = False, dTheta = 360//nelem, rho = 1610)
+print(a.ShearFlow(1.5*10**6))
+
+
+CompLam = [0, 0, 0]
+ShearLam = [45, -45, 45, -45]
+TensionLam = [0, 0, 0]
+Lam1 = Laminate(CompLam, AssignmentLamina)
+Lam2 = Laminate(ShearLam, AssignmentLamina)
+Lam3 = Laminate(TensionLam, AssignmentLamina)
+Lamf = Laminate(CompLam, AssignmentLamina)
+Lamw = Laminate(ShearLam, AssignmentLamina)
+stifh = Stiffener(Lamw, Lamf, "hat")
+# nelem should be divisible by 2 and divisible by sum of ratio
+nelem = 30
+nnode = nelem+1 # where last and first are the same, dont set stiff on last node
+stifList = [
+	[30, stifh],
+	[60, stifh]
+]
+
 a = Fuselage([Lam1, Lam2, Lam3], ratio = [1,1,1], Stiffeners = False, dTheta = 360//nelem, rho = 1610)
 print(a.ShearFlow(1.5*10**6))

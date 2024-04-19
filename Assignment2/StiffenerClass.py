@@ -30,6 +30,7 @@ def get_angle(v):
 class Stiffener():
 	def __init__(self, LaminateWeb, LaminateFlange, CrossSection, angle = 0):
 		tw, tf = LaminateWeb.h/2, LaminateFlange.h/2
+		self.LaminateWeb, self.LaminateFlange = LaminateWeb, LaminateFlange
 		if CrossSection == "L":
 			self.Flange = [True, False]
 			self.midlines = np.zeros((4, 2))
@@ -64,6 +65,7 @@ class Stiffener():
 		self.EAy = 0
 		self.EA = 0
 		self.GA = 0
+		self.A = 0
 		# Setting axial stiffness and shear stiffness
 		for i, line in enumerate(self.midlines.T):
 			line = line.reshape((2,2))
@@ -80,10 +82,63 @@ class Stiffener():
 			self.EAy += Ex*l*h*cen[1]
 			self.EA += Ex*l*h
 			self.GA += Gxy*l*h*np.sin(ang)
+			self.A += l*h
 		self.x_cg = self.EAx/self.EA
 		self.y_cg = self.EAy/self.EA
 
+	def set_angle(self, angle):
+		# Rotate
+		for i, line in enumerate(self.midlines.T):
+			self.midlines[0:2, i] = (Rx(np.deg2rad(angle))@line[0:2].reshape((-1, 1))).reshape(-1)
+			self.midlines[2:4, i] = (Rx(np.deg2rad(angle))@line[2:4].reshape((-1, 1))).reshape(-1)
 
+		self.EAx = 0
+		self.EAy = 0
+		self.EA = 0
+		self.GA = 0
+		# Setting axial stiffness and shear stiffness
+		for i, line in enumerate(self.midlines.T):
+			line = line.reshape((2,2))
+			l = get_length(line)
+			cen = get_center(line)
+			ang = get_angle(line)
+			if self.Flange[i]:
+				Ex, Ey, vxy, vyx, Gxy = self.LaminateFlange.calcEngConst()
+				h = self.LaminateFlange.h
+			elif self.Flange[i]:
+				Ex, Ey, vxy, vyx, Gxy = self.LaminateWeb.calcEngConst()
+				h = self.LaminateWeb.h
+			self.EAx += Ex*l*h*cen[0]
+			self.EAy += Ex*l*h*cen[1]
+			self.EA += Ex*l*h
+			self.GA += Gxy*l*h*np.sin(ang)
+		self.x_cg = self.EAx/self.EA
+		self.y_cg = self.EAy/self.EA
+
+	def get_fpf(self, strains_fuselage):
+		Fail = []
+		for i, line in enumerate(self.midlines.T):
+			if self.Flange[i]:
+				Lam = self.LaminateFlange
+			elif self.Flange[i]:
+				Lam = self.LaminateWeb
+			line = line.reshape((2,2))
+			l = get_length(line)
+			cen = get_center(line)
+			ang = get_angle(line)
+			ex_f = strains_fuselage[0]
+			exy_f = strains_fuselage[2]
+			ex = ex_f
+			exy = np.sin(np.deg2rad(ang))*exy_f
+			LamStrains = np.zeros((3, 1))
+			LamStrains[0, :] = ex
+			LamStrains[2, :] = exy
+			f_FFp, f_IFFp = Lam.PuckStrain(LamStrains)
+			a = np.max(f_FFp)
+			b = np.max(f_IFFp)
+			d = max(a, b)
+			Fail.append(d)
+		return Fail
 
 
 if __name__=="__main__":
