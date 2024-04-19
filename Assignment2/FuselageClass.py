@@ -281,8 +281,7 @@ class Fuselage:
 				B.append(t[i]*b*(2+self.y[i-1]/self.y[i])/6 + t[i]*b*(2+self.y[i+1]/self.y[i])/6)
 
 		else:
-			As = Stiff.A  # Stiffener area
-			As = self.stiffenereElem.A
+			As = [self.stiffenerElem[i].A for i in range(len(self.stiffenerElem))]
 			for i in range(self.nElem):
 				B.append(As[i] + t[i]*b*(2+self.y[i-1]/self.y[i])/6 + t[i]*b*(2+self.y[i+1]/self.y[i])/6)
 
@@ -378,6 +377,8 @@ class Fuselage:
 
 		return Sig_stif, Nxstif
 
+
+
 if __name__ == "__main__":
 	# CompLam = [0, 0, 0]
 	# ShearLam = [45, -45, 45, -45]
@@ -392,15 +393,15 @@ if __name__ == "__main__":
 	# a.Load(15e6, 1.5e6, plot_failure = True)
 	# print(a.mass)
 
-	nelem = 30
-	t = 1.43e-3
-	AssignmentMetalLamina = Lamina(t, 69e9, 69e9, 0.29, 26e9)
-	AssignmentMetalLamina.setStrengths(410e6, 400e6, 430e6, 430e6, 230e6)
-	Lam = Laminate([0], AssignmentMetalLamina)
-	a = Fuselage([Lam], [1], Stiffeners = False, dTheta = 360 // nelem, Metal = True, rho = 2770)
-	a.PlotNodes()
-	a.Load(15e6, 1.5e6, plot_failure = True)
-	print(a.mass)
+	# nelem = 30
+	# t = 1.43e-3
+	# AssignmentMetalLamina = Lamina(t, 69e9, 69e9, 0.29, 26e9)
+	# AssignmentMetalLamina.setStrengths(410e6, 400e6, 430e6, 430e6, 230e6)
+	# Lam = Laminate([0], AssignmentMetalLamina)
+	# a = Fuselage([Lam], [1], Stiffeners = False, dTheta = 360 // nelem, Metal = True, rho = 2770)
+	# a.PlotNodes()
+	# a.Load(15e6, 1.5e6, plot_failure = True)
+	# print(a.mass)
 
 	CompLam = [0, 0, 0]
 	ShearLam = [45, -45, 45, -45]
@@ -419,9 +420,9 @@ if __name__ == "__main__":
 	A = nelem//6
 	B = [[(360//nelem)*i, StringH] for i in range(A)]
 	i = len(B)
-	C = [[(360//nelem)*(j+i), StringI] for j in range(1,A)]
+	C = [[(360//nelem)*(j+i), StringI] for j in range(1,A+1)]
 	j = len(C)
-	D = [[(360//nelem)*(k+j), StringL] for k in range(1,A)]
+	D = [[(360//nelem)*(k+j), StringL] for k in range(1,A+1)]
 	E = B + C + D
 	print(E)
 	a = Fuselage([Lam1, Lam2, Lam3], ratio = [1,1,1], Stiffeners = E, dTheta = 360//nelem, rho = 1610)
