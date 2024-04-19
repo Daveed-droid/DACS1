@@ -91,6 +91,7 @@ class Fuselage:
 			else:
 				self.bend_stiff = np.zeros(self.nElem)
 				self.shear_stiff = np.zeros(self.nElem)
+
 			axial_stiff = 0
 			temp = 0
 			# Finding neutral axis and setting shear stiffness
@@ -124,12 +125,15 @@ class Fuselage:
 				l = np.linalg.norm(np.array([x2, y2]).T - np.array([x1, y1]).T)
 				# Adding steiner term
 				self.bend_stiff[i] = Ex*h*l*(((y1+y2)/2)-self.y_neutral_axis)**2
+				self.Inertia[i] = self.bend_stiff[i] / Ex
+
 			if Stiffeners:
 				for j in range(len(self.stiffenerElem)):
 					index = i+j
 					stiff = self.stiffenerElem[j]
 					x, y = self.stiffener_pos[j]
 					self.bend_stiff[index] = stiff.EA * (y - self.y_neutral_axis) ** 2
+
 		else:
 			print("Invalid")
 
@@ -228,21 +232,22 @@ class Fuselage:
 				b = 2 * np.pi / self.nNodes * self.dia / 2  # Widt of element
 				As = [] # Insert Aerea of the stiffeners!!!
 				if Stress[0,i] >= StiffenerCrippling()[1]/As[i]:
-					print("Failure Stiffener Crippling", i, Stress[0,i]/ StiffenerCrippling()[1]/(t[i]*b))
+					print("Failure Stiffener Crippling", i, Stress[0,i]/ (StiffenerCrippling()[1]/(t[i]*b)))
 				#Check for skin buckling due to compression
 				if Stress[0,i] >= SkinBuckling()[0]/(t[i]*b):
-					print("Failure Skin Buckling", i, Stress[0,i]/ SkinBuckling()[0]/(t[i]*b))
+					print("Failure Skin Buckling Composite stiffener", i, Stress[0,i]/ (SkinBuckling()[0]/(t[i]*b)))
 				# Check for skin buckling due to shear
 				if ShearFlow() >= SkinBuckling()[1]:
-					print("Failure Skin due to shear", i, ShearFlow()[i] / SkinBuckling()[1])
+					print("Failure Skin due to shear Composite stiffener", i, ShearFlow()[i] / SkinBuckling()[1])
 			else:
 				b = self.dia*np.pi*3/16 #Length of element without stiffeners
 				#Check for skin buckling due to compression
 				if Stress[0,i] >= self.SkinBuckling()[0]/(t[i]*b):
-					print("Failure Skin Buckling", i, Stress[0,i]/ self.SkinBuckling()[0]/(t[i]*b))
+					print("Failure Skin Buckling", i, Stress[0,i], (self.SkinBuckling()[0]/(t[i]*b)) )
+
 				# Check for skin buckling due to shear
-				if self.ShearFlow()[i] >= self.SkinBuckling()[1]:
-					print("Failure Skin due to shear", i, self.ShearFlow()[i] / self.SkinBuckling()[1])
+				if self.ShearFlow()[i] >= self.SkinBuckling()[1]/t[i]:
+					print("Failure Skin due to shear", i, self.ShearFlow()[i] / (self.SkinBuckling()[1]/t[i]))
 
 
 
@@ -317,14 +322,33 @@ class Fuselage:
 			b = np.pi*self.dia*3/16
 		AR = a/b
 		m = 2 #???
-		D11 = self.ABD[3,3]
-		D66 = self.ABD[5,5]
-		D12 = self.ABD[3,4]
-		D22 = self.ABD[4,4]
+		if self.Metal == True:
+
+			D11 = self.Material[0].ABD[3,3]
+			D66 = self.Material[0].ABD[5,5]
+			D12 = self.Material[0].ABD[3,4]
+			D22 = self.Material[0].ABD[4,4]
+		else:
+			D11 = self.Material[0].ABD[3, 3]
+			D66 = self.Material[0].ABD[5, 5]
+			D12 = self.Material[0].ABD[3, 4]
+			D22 = self.Material[0].ABD[4, 4]
+
 
 		NCom = (np.pi**2*(D11*m**4+2*(D12+2*D66)*m**2*AR**2+D22*AR**4))/(a**2*m**2)
 
 		#Shear
+		if self.Metal == True:
+
+			D11 = self.Material[0].ABD[3,3]
+			D66 = self.Material[0].ABD[5,5]
+			D12 = self.Material[0].ABD[3,4]
+			D22 = self.Material[0].ABD[4,4]
+		else:
+			D11 = self.Material[1].ABD[3, 3]
+			D66 = self.Material[1].ABD[5, 5]
+			D12 = self.Material[1].ABD[3, 4]
+			D22 = self.Material[1].ABD[4, 4]
 		A = -0.27 + 0.185*(D12+2*D66)/(D11*D22)**0.5
 		B = 0.82+0.46*(D12+2*D66)/(D11*D22)-0.2*((D12+2*D66)/(D11*D66)**0.5)**2
 		beta = (D11/D22)**0.25
