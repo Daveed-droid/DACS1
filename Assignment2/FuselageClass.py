@@ -237,14 +237,14 @@ class Fuselage:
 				if Stress[0,i] >= SkinBuckling()[0]/(t[i]*b):
 					print("Failure Skin Buckling Composite stiffener", i, Stress[0,i]/ (SkinBuckling()[0]/(t[i]*b)))
 				# Check for skin buckling due to shear
-				if ShearFlow() >= SkinBuckling()[1]:
+				if ShearFlow()[i] >= SkinBuckling()[1]:
 					print("Failure Skin due to shear Composite stiffener", i, ShearFlow()[i] / SkinBuckling()[1])
 			else:
 				b = self.dia*np.pi*3/16 #Length of element without stiffeners
 				#Check for skin buckling due to compression
 				if Stress[0,i] >= self.SkinBuckling()[0]/(t[i]*b):
 					print("Failure Skin Buckling", i, Stress[0,i], (self.SkinBuckling()[0]/(t[i]*b)) )
-
+				print(self.stiffenerElem)
 				# Check for skin buckling due to shear
 				if self.ShearFlow()[i] >= self.SkinBuckling()[1]/t[i]:
 					print("Failure Skin due to shear", i, self.ShearFlow()[i] / (self.SkinBuckling()[1]/t[i]))
@@ -269,7 +269,7 @@ class Fuselage:
 		qb = np.zeros(self.nElem)
 		qs = np.zeros(self.nElem)
 		qm = np.zeros(self.nElem)
-		As = [0,0,0] # Stiffener area
+
 		if self.Metal == True:
 
 			t = self.Material[0].h
@@ -281,7 +281,8 @@ class Fuselage:
 				B.append(t[i]*b*(2+self.y[i-1]/self.y[i])/6 + t[i]*b*(2+self.y[i+1]/self.y[i])/6)
 
 		else:
-
+			As = Stiff.A  # Stiffener area
+			As = self.stiffenereElem.A
 			for i in range(self.nElem):
 				B.append(As[i] + t[i]*b*(2+self.y[i-1]/self.y[i])/6 + t[i]*b*(2+self.y[i+1]/self.y[i])/6)
 
@@ -361,14 +362,16 @@ class Fuselage:
 		StiffCond = Stiff.buckProp[0]
 		LamStiffElem = Stiff.buckProp[2]
 		D66 = LamStiffElem.ABD[5,5]
-
+		D11 = LamStiffElem.ABD[3,3]
+		D12 = LamStiffElem.ABD[3,4]
+		D22 = LamStiffElem.ABD[4,4]
 		if StiffCond == "OEF":	#OEF
-			Sig_OEFr = 1.63/((b/t)**0.717)	#Ratio of crippling strength to compressive strength of stiffner
-			Sig_stif = Sig_OEFr * XcStif
+			# Sig_OEFr = 1.63/((b/t)**0.717)	#Ratio of crippling strength to compressive strength of stiffner
+			# Sig_stif = Sig_OEFr * XcStif
 			Nxstif = 12*D66/b**2
 		elif StiffCond == "NEF":	#NEF
-			Sig_stifr = 11/((b/t)**1.124)	#Ratio of crippling strength to compressive strength of stiffner
-			Sig_stif = Sig_NEFr * XCStif
+			# Sig_stifr = 11/((b/t)**1.124)	#Ratio of crippling strength to compressive strength of stiffner
+			# Sig_stif = Sig_NEFr * XCStif
 			Nxstif = 2*3.1415**2/b**2*((D11*D22)**0.5+D12+2*D66)
 		else:
 			raise NotImplementedError
