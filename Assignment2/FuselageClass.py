@@ -17,7 +17,11 @@ def Rx(theta):
 class Fuselage:
 	def __init__(self, Material, ratio = [1, 1, 1], Stiffeners: bool = False, Metal = False, dTheta = 20, rho = 0):
 		dia = 6
+		self.dia = dia
 		self.Metal = Metal
+		self.Stiffeners = Stiffeners
+		self.dTheta = dTheta
+		self.ratio = ratio
 		# Create fuselage nodes
 		Theta = np.arange(-90, 271, dTheta)
 		self.nNodes = len(Theta)
@@ -26,12 +30,24 @@ class Fuselage:
 		self.y = dia/2 * np.sin(np.deg2rad(Theta))
 		self.element_pos = []
 		self.element_ang = []
+		self.thickness = []
+		self.Material = Material
 		for i in range(self.nNodes-1):
 			self.element_pos.append([self.x[i], self.y[i], self.x[i+1], self.y[i+1]])
 			self.element_ang.append(-(90+((Theta[i]+Theta[i+1])/2)))
-		self.element_pos = np.asarray(self.element_pos, dtype = float)
-		self.Material =  Material
-		self.ratio = ratio
+			
+			if i/self.nNodes <= self.ratio[0] /np.sum(self.ratio)/2:
+				print(i, self.ratio,self.nNodes,self.thickness,self.Material[0].h)
+				self.thickness.append(self.Material[0].h)
+			elif len(ratio) > 1 and self.ratio[0] /np.sum(self.ratio)/2  <i/self.nNodes <=  (self.ratio[1]+self.ratio[0]) /np.sum(self.ratio)/2:
+				self.thickness[i] = self.Material[1].h
+			elif len(ratio) > 2:
+				self.thickness[i] = self.Material[1].h
+
+
+			self.element_pos = np.asarray(self.element_pos, dtype = float)
+
+
 		A = 0
 		for i in range(len(self.ratio)):
 			t = self.Material[i].h
@@ -154,25 +170,64 @@ class Fuselage:
 		return Failed
 """
 	def ShearFlow(self, load):
-		if Case == 0:
-			Ixx = (D**4-(D-t)**4)*3.1415/64
-		elif Case == 1:
-			pass
+		b = 2 * np.pi / self.nNodes * D / 2
+		# Structural Idealization
+		angle = np.arange(0,360,self.dTheta)
+		t = self.thickness
+		B = []
+		qb = []
+		qs = []
+		qm = []
+		As = [0,0,0] # Stiffener area
+		if self.Metal == True:
+			t = self.Material[0].h
+			for i in range(self.nNodes/2):
+				B[i] = t[i]*b*(2+self.y[i-1]/self.y[i]) + t[i]*b*(2+self.y[i+1]/self.y[i])
+				B[i+self.nNodes/2] = B[i]
+
+		elif self.Stiffeners == False:
+			for i in range(self.nNodes):
+				B[i] = t[i]*b*(2+self.y[i-1]/self.y[i]) + t[i]*b*(2+self.y[i+1]/self.y[i])
+				B[i+self.nNodes/2] = B[i]
+
+
 		else:
+			for i in range(self.nNodes):
+				B[i] = As[i] + t[i]*b*(2+self.y[i-1]/self.y[i]) + t[i]*b*(2+self.y[i+1]/self.y[i])
+				B[i+self.nNodes/2] = B[i]
+
+		if self.Metal == True:
+			Ixx = (D**4-(D-2*t)**4)*3.1415/64
+		elif self.Stiffeners == False:
+			Ixx = np.sum(self.y**2(*self.thickness*b))
+
+		else:
+			Ixx = np.sum(self.y ** 2*(self.thickness*(b)+As))
 			pass
 
-		qs = -Sy/Ixx*
+		for i in range(self.nNodes/2):
+			qb[i] = B[i]+self.y[i]*-sy*Ixx
+			qm[i] = -qb[i]*(self.x[i+1]-self.x[i]*self.y[i]+qb[i]*(self.y[i+1]-self.y[i])*x[i])
+			qb[i+self.nNodes/2] = -qb[i]
+			qm[i+self.nNodes/2] = -qm[i]
+
+		qs0 = np.sum(qm) / (2*np.pi*(self.dia/2)**2)
+		qs = qb + qs0
+
+
+
+
 
 
 		return qs
 	def SkinBuckling(self):
 		#Compression
 		a = 1 #Length
-		b = 2*np.pi/self.nNodes*D
+		b = 2*np.pi/self.nNodes*D/2
 		AR = a/b
 		m = 2 #???
 		D11 = self.ABD[3,3]
-		D66 self.ABD[5,5]
+		D66 = self.ABD[5,5]
 		D12 = self.ABD[3,4]
 		D22 = self.ABD[4,4]
 
@@ -182,7 +237,7 @@ class Fuselage:
 		A = -0.27 + 0.185*(D12+2*D66)/(D11*D22)**0.5
 		B = 0.82+0.46*(D12+2*D66)/(D11*D22)-0.2((D12+2*D66)/(D11*D66)**0.5)**2
 		beta = (D11/D22)**0.25
-		K = 8.2 + 5*(D12+2*D66)/((D11*D22)**0.5*(A/beta+B*beta)
+		K = 8.2 + 5*(D12+2*D66)/((D11*D22)**0.5*(A/beta+B*beta))
 		NShear = 4*(D11*D22**3)**0.25*K/b**2
 		return NCom, N
 
