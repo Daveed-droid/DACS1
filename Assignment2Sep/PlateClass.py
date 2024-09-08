@@ -27,13 +27,13 @@ class Plate:
                 1 + self.A12 / self.A11)
         # Step 2: Find deflection w_11
         self.w11 = np.sqrt((16 * self.A11 * self.A22 * (self.D11 + 2 * (self.D12 + 2 * self.D66) + self.D22)) / (
-                    (self.A11 * self.A22 - self.A12 ** 2) * (self.A11 + 3 * self.A22)) * (self.Px / self.Pcr - 1))
+                (self.A11 * self.A22 - self.A12 ** 2) * (self.A11 + 3 * self.A22)) * (self.Px / self.Pcr - 1))
         # Step 3: Find K values
         self.K02 = ((self.A11 * self.A22 - self.A12 ** 2) / self.A22) * self.w11 ** 2 / 32
         self.K20 = ((self.A11 * self.A22 - self.A12 ** 2) / self.A11) * self.w11 ** 2 / 32
         # Step 4: Find w and its derivatives
         self.Py = self.Px * self.A12 / self.A11 - self.w11 ** 2 * (np.pi ** 2 / (8 * self.a)) * (
-                    self.A11 * self.A22 - self.A12 ** 2) / self.A11
+                self.A11 * self.A22 - self.A12 ** 2) / self.A11
         x = np.linspace(0, self.a, 50, endpoint = True)
         y = np.linspace(0, self.a, 50, endpoint = True)
         self.xv, self.yv = np.meshgrid(x, y)
@@ -57,42 +57,61 @@ class Plate:
             plt.show()
 
     def calcFailureNx(self, verbose = False):
-        Nx = np.reshape(self.Nx, -1)
-        Failed = np.reshape(np.zeros_like(self.xv), -1)
-        for i in range(len(np.reshape(self.xv, -1))):
-            Load = np.array([Nx[i], 0, 0, 0, 0, 0])
-            f_FFp, f_IFFp = self.Laminate.Puck(Load)
-            Failed[i] = 1.0 if 1.0 < f_FFp.max() or 1.0 < f_IFFp.max() else 0.0
-        Failed = np.reshape(Failed, (self.xv.shape[0], self.xv.shape[1]))
-        if verbose:
-            fig, ax = plt.subplots()
-            c = ax.pcolormesh(self.xv, self.yv, Failed, cmap = 'RdBu')
-            ax.set_title('Plot')
-            fig.colorbar(c, ax = ax)
-            plt.show()
-        if np.any(Failed):
-            return True
+        if 1 <= self.Px/self.Pcr:
+            Nx = np.reshape(self.Nx, -1)
+            Failed = np.reshape(np.zeros_like(self.xv), -1)
+            for i in range(len(np.reshape(self.xv, -1))):
+                Load = np.array([Nx[i], 0, 0, 0, 0, 0])
+                f_FFp, f_IFFp = self.Laminate.Puck(Load)
+                Failed[i] = 1.0 if 1.0 < f_FFp.max() or 1.0 < f_IFFp.max() else 0.0
+            Failed = np.reshape(Failed, (self.xv.shape[0], self.xv.shape[1]))
+            if verbose:
+                fig, ax = plt.subplots()
+                c = ax.pcolormesh(self.xv, self.yv, Failed, cmap = 'RdBu')
+                ax.set_title('Plot')
+                fig.colorbar(c, ax = ax)
+                plt.show()
+            if np.any(Failed):
+                return True
+            else:
+                return False
         else:
-            return False
+            Load = np.array([self.Px, 0, 0, 0, 0, 0])
+            f_FFp, f_IFFp = self.Laminate.Puck(Load)
+            Failed = 1.0 if 1.0 < f_FFp.max() or 1.0 < f_IFFp.max() else 0.0
+            if Failed:
+                return True
+            else:
+                return False
     def calcFailureAll(self, verbose = False):
-        Nx, Ny, Nxy = np.reshape(self.Nx, -1), np.reshape(self.Ny, -1), np.reshape(self.Nxy, -1)
-        Mx, My, Mxy = np.reshape(self.Mx, -1), np.reshape(self.My, -1), np.reshape(self.Mxy, -1)
-        Failed = np.reshape(np.zeros_like(self.xv), -1)
-        for i in range(len(np.reshape(self.xv, -1))):
-            Load = np.array([Nx[i], Ny[i], Nxy[i], Mx[i], My[i], Mxy[i]])
-            f_FFp, f_IFFp = self.Laminate.Puck(Load)
-            Failed[i] = 1.0 if 1.0 < f_FFp.max() or 1.0 < f_IFFp.max() else 0.0
-        Failed = np.reshape(Failed, (self.xv.shape[0], self.xv.shape[1]))
-        if verbose:
-            fig, ax = plt.subplots()
-            c = ax.pcolormesh(self.xv, self.yv, Failed, cmap = 'RdBu')
-            ax.set_title('Plot')
-            fig.colorbar(c, ax = ax)
-            plt.show()
-        if np.any(Failed):
-            return True
+        if 1 <= self.Px/self.Pcr:
+            Nx, Ny, Nxy = np.reshape(self.Nx, -1), np.reshape(self.Ny, -1), np.reshape(self.Nxy, -1)
+            Mx, My, Mxy = np.reshape(self.Mx, -1), np.reshape(self.My, -1), np.reshape(self.Mxy, -1)
+            Failed = np.reshape(np.zeros_like(self.xv), -1)
+            for i in range(len(np.reshape(self.xv, -1))):
+                Load = np.array([Nx[i], Ny[i], Nxy[i], Mx[i], My[i], Mxy[i]])
+                f_FFp, f_IFFp = self.Laminate.Puck(Load)
+                Failed[i] = 1.0 if 1.0 < f_FFp.max() or 1.0 < f_IFFp.max() else 0.0
+            Failed = np.reshape(Failed, (self.xv.shape[0], self.xv.shape[1]))
+            if verbose:
+                fig, ax = plt.subplots()
+                c = ax.pcolormesh(self.xv, self.yv, Failed, cmap = 'RdBu')
+                ax.set_title('Plot')
+                fig.colorbar(c, ax = ax)
+                plt.show()
+            if np.any(Failed):
+                return True
+            else:
+                return False
         else:
-            return False
+            Load = np.array([self.Px, self.Py, 0, 0, 0, 0])
+            f_FFp, f_IFFp = self.Laminate.Puck(Load)
+            Failed = 1.0 if 1.0 < f_FFp.max() or 1.0 < f_IFFp.max() else 0.0
+            if Failed:
+                return True
+            else:
+                return False
+
 
 if __name__ == "__main__":
     Lam = Laminate([0, 20, 30, 50], AssignmentLamina)
