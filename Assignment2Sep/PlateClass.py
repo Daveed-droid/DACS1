@@ -2,17 +2,38 @@ import numpy as np
 import matplotlib.pyplot as plt
 from Assignment2SepData import AssignmentLamina
 from LaminateClass import Laminate
+from itertools import product
+from collections import Counter
 
 
 class Plate:
-    def __init__(self, Laminate, a, Px):
+    # def __init__(self, Laminate, a, Px):
+    #     self.Pcr = None
+    #     self.Px = Px
+    #     self.w11 = None
+    #     self.K02 = None
+    #     self.K20 = None
+    #     self.Laminate = Laminate
+    #     self.a = a
+    #     self.A11 = Laminate.ABD[1, 1]
+    #     self.A12 = Laminate.ABD[1, 2]
+    #     self.A22 = Laminate.ABD[2, 2]
+    #     self.D11 = Laminate.ABD[3, 3]
+    #     self.D66 = Laminate.ABD[5, 5]
+    #     self.D12 = Laminate.ABD[3, 4]
+    #     self.D22 = Laminate.ABD[4, 4]
+
+
+    def __init__(self, a, Px):
         self.Pcr = None
         self.Px = Px
         self.w11 = None
         self.K02 = None
         self.K20 = None
-        self.Laminate = Laminate
         self.a = a
+
+    def ABD(self, Laminate):
+        self.Laminate = Laminate
         self.A11 = Laminate.ABD[1, 1]
         self.A12 = Laminate.ABD[1, 2]
         self.A22 = Laminate.ABD[2, 2]
@@ -113,9 +134,58 @@ class Plate:
                 return False
 
 
+    def calcOptPly(self):
+        optlam = []
+        nply = 1
+        angl = np.arange(-85, 91, 5)
+
+
+        for i in range(1,5):
+
+            a = list(product(angl,repeat=i))     #All permutations
+            a = [list(i) for i in a]
+            #print(a)
+            b = []  # Symetric and balanced laminas
+
+            for j in range(len(a)):
+                if a[j] == a[j][::-1]:
+                    freq = Counter(a[j])
+                    #print(a[j],(freq))
+
+                    for k in freq:
+                        if freq[k] != freq[-k] and k != 0 and k!= 90:
+                            #print(freq[k],freq[-k])
+                            break
+                    else:
+                        b.append(a[j])
+                        #print(a[j])
+                        print(b)
+
+                        continue
+
+                    continue
+
+            for l in range(len(b)):
+                Lam = Laminate(b[l], AssignmentLamina)
+                self.ABD(Lam)
+                self.calcLoads()
+                State = self.calcFailureNx()
+
+                print(State,b[l])
+
+
+
+# if __name__=="__main__":
+    # Lam = Laminate([0,20,30,50], AssignmentLamina)
+    # A = Plate(Lam, 1, 150000)
 if __name__ == "__main__":
-    Lam = Laminate([0, 20, 30, 50], AssignmentLamina)
-    A = Plate(Lam, 1, 100000)
-    A.calcLoads()
-    State = A.calcFailureNx()
-    print(State)
+    # Lam = Laminate([0, 20, 30, 50], AssignmentLamina)
+    # A = Plate(Lam, 1, 100000)
+    # A.calcLoads()
+    # State = A.calcFailureNx()
+    # print(State)
+    # A.calcFailureNx()
+    # A.calcOptPly()
+    B = Plate(0.4,1000)
+    B.calcOptPly()
+#
