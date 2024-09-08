@@ -33,15 +33,23 @@ class Plate:
         self.dwdyy = -(np.pi/self.a)**2*self.w
         self.dwdxy = self.w11*(np.pi/self.a)**2*np.cos(np.pi*x/self.a)*np.cos(np.pi*y/self.a)
         # Step 5: Find loads
+        x = np.linspace(0, self.a, 50, endpoint = True)
         y = np.linspace(0, self.a, 50, endpoint = True)
+        xv, yv = np.meshgrid(x, y)
         self.Nx = -(self.Px/self.a + 4*np.pi**2/self.a**2 * self.K02 * np.cos(2*np.pi*y/self.a))
         self.Ny = -(self.Py / self.a + 4 * np.pi ** 2 / self.a ** 2 * self.K20 * np.cos(2 * np.pi * x / self.a))
         self.Nxy = 0
         self.Mx = -self.D11*self.dwdxx-self.D12*self.dwdyy
         self.My = -self.D12 * self.dwdxx - self.D22 * self.dwdyy
         self.Mxy = -2*self.D66*self.dwdxy
+
+
+        self.Nx = -(self.Px / self.a + 4 * np.pi ** 2 / self.a ** 2 * self.K02 * np.cos(2 * np.pi * yv / self.a))
+
     def calcFailureNx(self):
-        pass
+        Load = None
+        f_FFp, f_IFFp = self.Laminate.Puck(Load)
+        Failed = True if 1 < np.max(np.max(f_FFp), np.max(f_IFFp)) else False
 
     def calcFailureAll(self):
         pass
