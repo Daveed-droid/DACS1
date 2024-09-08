@@ -27,9 +27,19 @@ class Plate:
         # Step 3: Find K values
         self.K02 = ((self.A11*self.A22 - self.A12**2)/self.A22) * self.w11**2 / 32
         self.K20 = ((self.A11*self.A22 - self.A12**2)/self.A11) * self.w11**2 / 32
-        # Step 4: Find loads
+        # Step 4: Find w and its derivatives
+        self.w = self.w11*np.sin(np.pi*x/self.a)*np.sin(np.pi*y/self.a)
+        self.dwdxx = -(np.pi/self.a)**2*self.w
+        self.dwdyy = -(np.pi/self.a)**2*self.w
+        self.dwdxy = self.w11*(np.pi/self.a)**2*np.cos(np.pi*x/self.a)*np.cos(np.pi*y/self.a)
+        # Step 5: Find loads
         y = np.linspace(0, self.a, 50, endpoint = True)
         self.Nx = -(self.Px/self.a + 4*np.pi**2/self.a**2 * self.K02 * np.cos(2*np.pi*y/self.a))
+        self.Ny = -(self.Py / self.a + 4 * np.pi ** 2 / self.a ** 2 * self.K20 * np.cos(2 * np.pi * x / self.a))
+        self.Nxy = 0
+        self.Mx = -self.D11*self.dwdxx-self.D12*self.dwdyy
+        self.My = -self.D12 * self.dwdxx - self.D22 * self.dwdyy
+        self.Mxy = -2*self.D66*self.dwdxy
     def calcFailureNx(self):
         pass
 
