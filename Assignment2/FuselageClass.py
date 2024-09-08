@@ -14,11 +14,15 @@ def Rx(theta):
 	R[2, 1] = np.sin(theta)
 	R[1, 2] = -np.sin(theta)
 	return R
-
+def sym(layup, n):
+	for i in range(n):
+		layup += list(np.flip(layup))
+	return layup
 
 class Fuselage:
-	def __init__(self, Material, ratio = [1, 1, 1], Stiffeners: bool or list = False, Metal = False, dTheta = 20, rho = 0):
+	def __init__(self, Material, ratio = [1, 1, 1], Stiffeners: bool or list = False, Metal = False, dTheta = 20, rho = 0, LayUpStr = False):
 		dia = 6
+		self.LayUpStr = LayUpStr
 		self.dia = dia
 		self.Metal = Metal
 		self.Stiffeners = Stiffeners
@@ -35,7 +39,7 @@ class Fuselage:
 		self.thickness = []
 		self.stiffenerElem = []
 		self.Material = Material
-		if self.Stiffeners:
+		if type(self.Stiffeners) == list:
 
 			self.stiffener_pos = []
 			for i in range(len(Stiffeners)):
@@ -154,9 +158,16 @@ class Fuselage:
 		start2 = sum(temp[0:imid])
 		end2 = start2 + temp[imid]
 		for i in range(len(self.Material)):
-			ax.plot(self.x[0], self.y[0], color = colors[i], label=f"{self.Material[i].LayUp}") # Set legend
-			ax.plot(self.x[start:end+1], self.y[start:end+1], marker = "X", color = colors[i])
-			ax.plot(self.x[start2:end2+1], self.y[start2:end2+1], marker = "X", color = colors[(len(self.Material)-1)-i])
+			if self.LayUpStr:
+				ax.plot(self.x[0], self.y[0], color = colors[i], label=f"{self.LayUpStr[i]}") # Set legend
+			else:
+				ax.plot(self.x[0], self.y[0], color = colors[i], label=f"{self.Material[i].LayUp}") # Set legend
+			if type(self.Stiffeners)==list:
+				marker = None
+			else:
+				marker = "X"
+			ax.plot(self.x[start:end+1], self.y[start:end+1], marker = marker, color = colors[i])
+			ax.plot(self.x[start2:end2+1], self.y[start2:end2+1], marker = marker, color = colors[(len(self.Material)-1)-i])
 			if i == len(self.Material)-1:
 				break
 			i2 = i + imid
@@ -172,6 +183,27 @@ class Fuselage:
 		if type(Failed)!=type(None):
 			for i in range(len(self.x)-1):
 				plt.text((self.x[i]+self.x[i+1])*0.90/2, (self.y[i]+self.y[i+1])*0.90/2, f"{round(Failed[i],2)}", fontsize=8, horizontalalignment='center', verticalalignment='center')
+		if type(self.Stiffeners) == list:
+			x = -self.dia/2 * np.cos(np.deg2rad(-90))
+			y = self.dia/2 * np.sin(np.deg2rad(-90))
+			plt.scatter(x,y, marker="o", label = "Hat Stiff", color = "red")
+			plt.scatter(x,y, marker="o", label = "I Stiff", color = "blue")
+			plt.scatter(x,y, marker="o", label = "L Stiff", color = "green")
+			for i in range(len(self.Stiffeners)):
+				ang, stiff = self.Stiffeners[i]
+				x = -self.dia/2 * np.cos(np.deg2rad(ang))
+				y = self.dia/2 * np.sin(np.deg2rad(ang))
+				if stiff.CrossSection == "hat":
+					color = "red"
+				elif stiff.CrossSection == "I":
+					color = "blue"
+				elif stiff.CrossSection == "L":
+					color = "green"
+
+				plt.scatter(x,y, marker="o", color = color)
+				plt.scatter(-x,y, marker="o", color = color)
+
+			plt.scatter(0,3, marker="o", color = color)
 
 		xmin, xmax = ax.get_xlim()
 		ax.set_xlim([xmin, xmax*2])
@@ -194,9 +226,11 @@ class Fuselage:
 		LamStrains = np.zeros((3, self.nElem))
 		LamStrains[0, :] = ex
 		LamStrains[2, :] = exy
-		Stress = np.zeros([3,self.nElem])
-		Stress[0,:] = ex *EI/I
-		Failed = np.zeros(self.nElem)
+		Stress = np.zeros([3, self.nElem])
+		for i in range(len(self.laminates)):
+			E = self.laminates[i].calcEngConst()[0]
+			Stress[0, i] = ex[i] * E
+		self.Failed = np.zeros(self.nElem)
 		for i in range(self.nElem):
 			lam = self.laminates[i]
 			if not self.Metal:
@@ -211,8 +245,8 @@ class Fuselage:
 				c = np.max(f_sm)
 				temp = max(a, b)
 				d = max(c, temp)
-			Failed[i] = d
-		if self.Stiffeners:
+			self.Failed[i] = d
+		if type(self.Stiffeners) == list:
 			stif_pos = np.asarray(self.stiffener_pos)
 			y = stif_pos[:, 1]
 			ex = moment*(y-self.y_neutral_axis)/EI
@@ -224,41 +258,52 @@ class Fuselage:
 				LamStrains[2, :] = exy
 				FailLam = self.stiffenerElem[i].get_fpf(LamStrains)
 				self.FailedStiffners.append(max(FailLam))
-		for i in range(self.nElem):
+		As = [self.stiffenerElem[i].A for i in range(len(self.stiffenerElem))] # Insert Aerea of the stiffeners!!!
+		for i in [0, 7]:
 
 			#	Buckling with stiffners
-			if self.Stiffeners == True:
-				#Check for stiffener crippling
-				b = 2 * np.pi / self.nNodes * self.dia / 2  # Widt of element
-				As = [] # Insert Aerea of the stiffeners!!!
-				if Stress[0,i] >= self.StiffenerCrippling()[1]/As[i]:
-					print("Failure Stiffener Crippling", i, Stress[0,i]/ (self.StiffenerCrippling()[1]/(t[i]*b)))
-				#Check for skin buckling due to compression
-				if Stress[0,i] >= self.SkinBuckling()[0]/(t[i]*b):
-					print("Failure Skin Buckling Composite stiffener", i, Stress[0,i]/ (self.SkinBuckling()[0]/(t[i]*b)))
+			if type(self.Stiffeners) == list:
+				x1, y1, x2, y2 = self.element_pos[0, :]
+				b = np.linalg.norm(np.array([x2, y2]).T - np.array([x1, y1]).T)
+				Nxcrit = self.SkinBuckling()[0]
+				Nxycrit = self.SkinBuckling()[1]
+				Nx = -Stress[0,i]*(t[i]*b)
+				Nxy = self.ShearFlow()[i]*t[i]
+				Ncrip = self.StiffenerCrippling(self.stiffenerElem[i])[1]
+				Nstiff = (moment*(0-self.y_neutral_axis)/EI)*(self.stiffenerElem[i].EA)
+				# Check for stiffener crippling
+				print("Failure Stiffener Crippling", i+1, Nstiff / Ncrip)
+				# Check for skin buckling due to compression
+				print("Failure Skin Buckling Composite stiffener", i+1, Nx / (Nxcrit*b))
 				# Check for skin buckling due to shear
-				if self.ShearFlow()[i] >= self.SkinBuckling()[1]:
-					print("Failure Skin due to shear Composite stiffener", i, self.ShearFlow()[i] / self.SkinBuckling()[1])
+				print("Failure Skin due to Shear Buckling Composite stiffener", i+1, Nxy / (Nxycrit*b))
+				print("MoS Comp", (Nxcrit*b)/Nx-1)
+				print("MoS Shear", (Nxycrit*b)/Nxy-1)
+				print("Mos Cripple ", Ncrip/Nstiff-1)
 			else:
-				b = self.dia*np.pi*3/16 #Length of element without stiffeners
-				#Check for skin buckling due to compression
-				if Stress[0,i] >= self.SkinBuckling()[0]/(t[i]*b):
-					print("Failure Skin Buckling", i, Stress[0,i]/ (self.SkinBuckling()[0]/(t[i]*b)) )
+				b = self.dia*np.pi*3/16  # Length of element without stiffeners
+				Nxcrit = self.SkinBuckling()[0]
+				Nxycrit = self.SkinBuckling()[1]
+				Nx = -Stress[0,i]*(t[i]*b)
+				Nxy = self.ShearFlow()[i]*t[i]
+				# Check for skin buckling due to compression
+				print("Failure Skin Buckling", i+1, Nx / (Nxcrit*b))
 				# Check for skin buckling due to shear
-				if self.ShearFlow()[i] >= self.SkinBuckling()[1]/t[i]:
-					print("Failure Skin due to shear", i, self.ShearFlow()[i] / (self.SkinBuckling()[1]/t[i]))
+				print("Failure Skin due to Shear Buckling", i+1,  Nxy / (Nxycrit*b))
+				print("MoS Comp", (Nxcrit*b)/Nx-1)
+				print("MoS Shear", (Nxycrit*b)/Nxy-1)
 
 
 
 		if plot_failure:
-			self.PlotNodes(Failed)
-		return Failed
+			self.PlotNodes(self.Failed)
+		return self.Failed
 
 	def ShearFlow(self):
 		sy = 1.5*10**6
-		if self.Stiffeners == True:
-
-			b = 2*np.pi/self.nNodes*D/2
+		if type(self.Stiffeners) == list:
+			x1, y1, x2, y2 = self.element_pos[0, :]
+			b = np.linalg.norm(np.array([x2, y2]).T - np.array([x1, y1]).T)
 		else:
 			b = np.pi*self.dia*3/16
 		# Structural Idealization
@@ -274,7 +319,7 @@ class Fuselage:
 			t = self.Material[0].h
 			for i in range(self.nElem):
 				B.append(t*b*(2+self.y[i-1]/self.y[i])/6 + t*b*(2+self.y[i+1]/self.y[i])/6)
-		elif self.Stiffeners == False:
+		elif type(self.Stiffeners) != list:
 
 			for i in range(self.nElem):
 				B.append(t[i]*b*(2+self.y[i-1]/self.y[i])/6 + t[i]*b*(2+self.y[i+1]/self.y[i])/6)
@@ -289,11 +334,12 @@ class Fuselage:
 		D = self.dia
 		if self.Metal == True:
 			Ixx = (D**4-(D-2*t)**4)*3.1415/64
-		elif self.Stiffeners == False:
+		elif type(self.Stiffeners) != list:
 			Ixx = np.sum(self.y[0:-1]**2*(self.thickness*b))
 
 		else:
-			Ixx = np.sum(self.y[0:-1] ** 2*(self.thickness*(b)+As))
+			As = [self.stiffenerElem[i].A for i in range(len(self.stiffenerElem))]
+			Ixx = np.sum(self.y[0:-1] ** 2*(self.thickness*(b)+np.asarray(As)))
 			pass
 
 		for i in range(self.nElem):
@@ -314,13 +360,18 @@ class Fuselage:
 	def SkinBuckling(self):
 		#Compression
 		a = 1 #Length
-		if self.Stiffeners == True:
-
-			b = 2*np.pi/self.nNodes*D/2
+		if type(self.Stiffeners) == list:
+			x1, y1, x2, y2 = self.element_pos[0, :]
+			b = np.linalg.norm(np.array([x2, y2]).T - np.array([x1, y1]).T)
 		else:
 			b = np.pi*self.dia*3/16
 		AR = a/b
-		m = 2 #???
+		if AR<1.4:
+			m = 1
+		elif AR<2.45:
+			m=2
+		else:
+			m=3
 		if self.Metal == True:
 
 			D11 = self.Material[0].ABD[3,3]
@@ -334,7 +385,7 @@ class Fuselage:
 			D22 = self.Material[0].ABD[4, 4]
 
 
-		NCom = (np.pi**2*(D11*m**4+2*(D12+2*D66)*m**2*AR**2+D22*AR**4))/(a**2*m**2)
+		NCom = (np.pi**2*(D11*m**2+2*(D12+2*D66)*AR**2+D22*AR**4/m**2))/(a**2)
 
 		#Shear
 		if self.Metal == True:
@@ -353,63 +404,80 @@ class Fuselage:
 		beta = (D11/D22)**0.25
 		K = 8.2 + 5*(D12+2*D66)/((D11*D22)**0.5*(A/beta+B*beta))
 		NShear = 4*(D11*D22**3)**0.25*K/b**2
+		Nyx = (9*np.pi**4*b)/(32*a**3) * (D11 + 2*(D12 + 2*D66)*a**2/b**2 + D22*a**4/b**4)
+		NShear = Nyx
 		return NCom, NShear
 
 	def StiffenerCrippling(self, Stiff):
-		b = Stiff.buckProp[1]
-		StiffCond = Stiff.buckProp[0]
-		LamStiffElem = Stiff.buckProp[2]
-		D66 = LamStiffElem.ABD[5,5]
-		D11 = LamStiffElem.ABD[3,3]
-		D12 = LamStiffElem.ABD[3,4]
-		D22 = LamStiffElem.ABD[4,4]
-		if StiffCond == "OEF":	#OEF
-			# Sig_OEFr = 1.63/((b/t)**0.717)	#Ratio of crippling strength to compressive strength of stiffner
-			# Sig_stif = Sig_OEFr * XcStif
-			Nxstif = 12*D66/b**2
-		elif StiffCond == "NEF":	#NEF
-			# Sig_stifr = 11/((b/t)**1.124)	#Ratio of crippling strength to compressive strength of stiffner
-			# Sig_stif = Sig_NEFr * XCStif
-			Nxstif = 2*3.1415**2/b**2*((D11*D22)**0.5+D12+2*D66)
-		else:
-			raise NotImplementedError
-
-		return Sig_stif, Nxstif
+		N = []
+		for i in range(len(Stiff.buckProp)):
+			b = Stiff.buckProp[i][1]
+			StiffCond = Stiff.buckProp[i][0]
+			LamStiffElem = Stiff.buckProp[i][2]
+			D66 = LamStiffElem.ABD[5,5]
+			D11 = LamStiffElem.ABD[3,3]
+			D12 = LamStiffElem.ABD[3,4]
+			D22 = LamStiffElem.ABD[4,4]
+			if StiffCond == "OEF":	#OEF
+				# Sig_OEFr = 1.63/((b/t)**0.717)	#Ratio of crippling strength to compressive strength of stiffner
+				# Sig_stif = Sig_OEFr * XcStif
+				Nxstif_ = 12*D66/b**2
+				N.append(Nxstif_)
+			elif StiffCond == "NEF":	#NEF
+				# Sig_stifr = 11/((b/t)**1.124)	#Ratio of crippling strength to compressive strength of stiffner
+				# Sig_stif = Sig_NEFr * XCStif
+				Nxstif_ = 2*3.1415**2/b**2*((D11*D22)**0.5+D12+2*D66)
+				N.append(Nxstif_)
+			else:
+				raise NotImplementedError
+		Nxstif = min(N)
+		return D11, Nxstif
 
 
 
 if __name__ == "__main__":
-	CompLam = [0, 0, 0]
-	ShearLam = [45, -45, 45, -45]
-	TensionLam = [0, 0, 0]
-	Lam1 = Laminate(CompLam, AssignmentLamina)
-	Lam2 = Laminate(ShearLam, AssignmentLamina)
-	Lam3 = Laminate(TensionLam, AssignmentLamina)
-	# nelem should be divisible by 2 and divisible by sum of ratio
-	nelem = 30
-	a = Fuselage([Lam1, Lam2, Lam3], ratio = [1,1,1], Stiffeners = False, dTheta = 360//nelem, rho = 1610)
-	a.PlotNodes()
-	a.Load(15e6, 1.5e6, plot_failure = True)
-	print(a.mass)
+	# nelem = 30
+	# t = 20e-3
+	# AssignmentMetalLamina = Lamina(t, 69e9, 69e9, 0.29, 26e9)
+	# AssignmentMetalLamina.setStrengths(410e6, 400e6, 430e6, 430e6, 230e6)
+	# Lam = Laminate([0], AssignmentMetalLamina)
+	# a = Fuselage([Lam], [1], Stiffeners = False, dTheta = 360 // nelem, Metal = True, rho = 2770)
+	# a.PlotNodes()
+	# Failed = a.Load(15e6, 1.5e6, plot_failure = True)
+	# print("Mos Yield ", 1/np.max(Failed)-1)
+	# print(a.mass)
 
-	nelem = 30
-	t = 1.43e-3
-	AssignmentMetalLamina = Lamina(t, 69e9, 69e9, 0.29, 26e9)
-	AssignmentMetalLamina.setStrengths(410e6, 400e6, 430e6, 430e6, 230e6)
-	Lam = Laminate([0], AssignmentMetalLamina)
-	a = Fuselage([Lam], [1], Stiffeners = False, dTheta = 360 // nelem, Metal = True, rho = 2770)
-	a.PlotNodes()
-	a.Load(15e6, 1.5e6, plot_failure = True)
-	print(a.mass)
-	"""
-	CompLam = [0, 0, 0]
-	ShearLam = [45, -45, 45, -45]
-	TensionLam = [0, 0, 0]
+
+	# n = 5
+	# CompLam = sym([0, 0, 0, 0], n)
+	# ShearLam = sym([45, 90, -45], n)
+	# TensionLam = sym([0, 0], n)
+	# LayUpStr = ["[0, 0, 0, 0]$_{"+str(n)+"s}$", "[45, 90, -45]$_{"+str(n)+"s}$", "[0, 0]$_{"+str(n)+"s}$"]
+	# Lam1 = Laminate(CompLam, AssignmentLamina)
+	# Lam2 = Laminate(ShearLam, AssignmentLamina)
+	# Lam3 = Laminate(TensionLam, AssignmentLamina)
+	# # nelem should be divisible by 2 and divisible by sum of ratio
+	# nelem = 30
+	# a = Fuselage([Lam1, Lam2, Lam3], ratio = [1,1,1], Stiffeners = False, dTheta = 360//nelem, rho = 1610, LayUpStr = LayUpStr)
+	# a.PlotNodes()
+	# Failed = a.Load(15e6, 1.5e6, plot_failure = True)
+	# print("Mos Yield ", 1/np.max(Failed)-1)
+	# print("Mass: ", a.mass)
+
+
+	n = 5
+	CompLam = sym([0, 0, 0], n)
+	ShearLam = sym([45, 0, 0, -45], n)
+	TensionLam = sym([0], n-2)
+	FlangeLam = sym([0, 0], 2)
+	WebLam = sym([45, -45], 2)
+	print(WebLam)
+	LayUpStr = ["[0, 0, 0]$_{"+str(n)+"s}$", "[45, 0, 0, -45]$_{"+str(n)+"s}$", "[0]$_{"+str(n-2)+"s}$"]
 	Lam1 = Laminate(CompLam, AssignmentLamina)
 	Lam2 = Laminate(ShearLam, AssignmentLamina)
 	Lam3 = Laminate(TensionLam, AssignmentLamina)
-	LamF = Laminate(CompLam, AssignmentLamina)
-	LamW = Laminate(ShearLam, AssignmentLamina)
+	LamF = Laminate(FlangeLam, AssignmentLamina)
+	LamW = Laminate(WebLam, AssignmentLamina)
 	StringH = Stiffener(LamW, LamF, "hat")
 	StringL = Stiffener(LamW, LamF, "L")
 	StringI = Stiffener(LamW, LamF, "I")
@@ -417,15 +485,14 @@ if __name__ == "__main__":
 	# nelem should be divisible by 2 and divisible by sum of ratio
 	nelem = 30
 	A = nelem//6
-	B = [[(360//nelem)*i, StringH] for i in range(A)]
+	B = [[(360//nelem)*i-90, StringH] for i in range(A)]
 	i = len(B)
-	C = [[(360//nelem)*(j+i), StringI] for j in range(1,A+1)]
+	C = [[(360//nelem)*(j+i)-90, StringI] for j in range(0,A+1)]
 	j = len(C)
-	D = [[(360//nelem)*(k+j), StringL] for k in range(1,A+1)]
+	D = [[(360//nelem)*(k+j+i)-90, StringL] for k in range(0,A-1)]
 	E = B + C + D
-	print(E)
-	a = Fuselage([Lam1, Lam2, Lam3], ratio = [1,1,1], Stiffeners = E, dTheta = 360//nelem, rho = 1610)
+	a = Fuselage([Lam1, Lam2, Lam3], ratio = [1,1,1], Stiffeners = E, dTheta = 360//nelem, rho = 1610, LayUpStr = LayUpStr)
 	a.PlotNodes()
-	a.Load(15e6, 1.5e6, plot_failure = True)
+	Failed = a.Load(15e6, 1.5e6, plot_failure = True)
+	print("Mos Yield ", 1/np.max(Failed)-1)
 	print(a.mass)
-	"""
