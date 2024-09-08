@@ -147,6 +147,7 @@ class Plate:
             #print(a)
             b = []  # Symetric and balanced laminas
 
+
             for j in range(len(a)):
                 if a[j] == a[j][::-1]:
                     freq = Counter(a[j])
