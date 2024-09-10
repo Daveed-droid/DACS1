@@ -10,7 +10,6 @@ Yt = 70e6
 Yc = 300e6
 S = 100e6
 t = 0.135e-3
-P = 1610
 
 AssignmentLamina = Lamina(t, Ex, Ey, vxy, Gxy)
 AssignmentLamina.setStrengths(Xt, Yt, Xc, Yc, S)
