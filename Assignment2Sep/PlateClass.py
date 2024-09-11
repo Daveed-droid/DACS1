@@ -71,15 +71,44 @@ class Plate:
         if 1 <= self.Px / self.Pcr:
             Nx = np.reshape(self.Nx, -1)
             Failed = np.reshape(np.zeros_like(self.xv), -1)
+            FFp, IFFp = np.zeros_like(Failed), np.zeros_like(Failed)
             for i in range(len(np.reshape(self.xv, -1))):
                 Load = np.array([Nx[i], 0, 0, 0, 0, 0])
                 f_FFp, f_IFFp = self.Laminate.Puck(Load)
                 Failed[i] = 1.0 if 1.0 < f_FFp.max() or 1.0 < f_IFFp.max() else 0.0
-            Failed = np.reshape(Failed, (self.xv.shape[0], self.xv.shape[1]))
+                FFp[i], IFFp[i] = f_FFp.max(), f_IFFp.max()
+            row, col = self.xv.shape[0], self.xv.shape[1]
+            Failed = np.reshape(Failed, (row, col))
+            FFp, IFFp = np.reshape(FFp, (row, col)), np.reshape(IFFp, (row, col))
             if verbose:
                 fig, ax = plt.subplots()
-                c = ax.pcolormesh(self.xv, self.yv, Failed, cmap = 'RdBu')
+                c = ax.pcolormesh(self.xv, self.yv, Failed, cmap = 'Reds')
                 ax.set_title('Plot')
+                fig.colorbar(c, ax = ax)
+                plt.show()
+                fig, ax = plt.subplots()
+                c = ax.pcolormesh(self.xv, self.yv, FFp, cmap = 'Reds')
+                ax.set_title('FFp')
+                fig.colorbar(c, ax = ax)
+                plt.show()
+                fig, ax = plt.subplots()
+                c = ax.pcolormesh(self.xv, self.yv, IFFp, cmap = 'Reds')
+                ax.set_title('IFFp')
+                fig.colorbar(c, ax = ax)
+                plt.show()
+                fig, ax = plt.subplots()
+                c = ax.pcolormesh(self.xv, self.yv, N1, cmap = 'Reds')
+                ax.set_title('N1')
+                fig.colorbar(c, ax = ax)
+                plt.show()
+                fig, ax = plt.subplots()
+                c = ax.pcolormesh(self.xv, self.yv, N2, cmap = 'Reds')
+                ax.set_title('N2')
+                fig.colorbar(c, ax = ax)
+                plt.show()
+                fig, ax = plt.subplots()
+                c = ax.pcolormesh(self.xv, self.yv, N12, cmap = 'Reds')
+                ax.set_title('N12')
                 fig.colorbar(c, ax = ax)
                 plt.show()
             if np.any(Failed):
@@ -103,6 +132,7 @@ class Plate:
             Mx, My, Mxy = np.reshape(self.Mx, -1), np.reshape(self.My, -1), np.reshape(self.Mxy, -1)
             Failed = np.reshape(np.zeros_like(self.xv), -1)
             FailFloat = np.reshape(np.zeros_like(self.xv), -1)
+            FFp, IFFp = np.zeros_like(Failed), np.zeros_like(Failed)
             for i in range(len(np.reshape(self.xv, -1))):
                 Load = np.array([Nx[i], Ny[i], Nxy[i], Mx[i], My[i], Mxy[i]])
                 f_FFp, f_IFFp = self.Laminate.Puck(Load)
@@ -110,6 +140,7 @@ class Plate:
                 FailFloat[i] = max(f_FFp.max(), f_IFFp.max())
             Failed = np.reshape(Failed, (self.xv.shape[0], self.xv.shape[1]))
             FailFloat = np.reshape(FailFloat, (self.xv.shape[0], self.xv.shape[1]))
+            FFp, IFFp = np.reshape(FFp, (self.xv.shape[0], self.xv.shape[1])), np.reshape(IFFp, (self.xv.shape[0], self.xv.shape[1]))
             if verbose:
                 fig, ax = plt.subplots()
                 c = ax.pcolormesh(self.xv, self.yv, FailFloat, cmap = 'Reds')
@@ -123,6 +154,16 @@ class Plate:
                 fig, ax = plt.subplots()
                 ax.set_title('Ny Plot')
                 ax.plot(self.xv[49, :], NySq[49, :])
+                plt.show()
+                fig, ax = plt.subplots()
+                c = ax.pcolormesh(self.xv, self.yv, FFp, cmap = 'Reds')
+                ax.set_title('FFp')
+                fig.colorbar(c, ax = ax)
+                plt.show()
+                fig, ax = plt.subplots()
+                c = ax.pcolormesh(self.xv, self.yv, IFFp, cmap = 'Reds')
+                ax.set_title('IFFp')
+                fig.colorbar(c, ax = ax)
                 plt.show()
             if np.any(Failed):
                 return True
@@ -163,7 +204,7 @@ class Plate:
                 Lam = Laminate(b[l], AssignmentLamina)
                 self.ABD(Lam)
                 self.calcLoads()
-                State = self.calcFailureNx() if NxOnly else self.calcFailureAll()
+                State = self.calcFailureNx(verbose = verbose) if NxOnly else self.calcFailureAll(verbose = verbose)
                 if not State: nPassed += 1
                 print("{:>12}\tLayup: {:>30}\tPx/Pcr: {:<16}\tPcr: {:<16}".format("Failed" if State else "Not Failed",
                                                                                   str(b[l]),
@@ -174,9 +215,9 @@ class Plate:
 
 if __name__ == "__main__":
     B = Plate(0.4, 20000)
-    B.calcOptPly(NxOnly = False)
-    B = Plate(0.4, 20000)
+    B.calcOptPly(NxOnly = True, verbose = False)
+    B = Plate(0.4, 500000)
     B.ABD(Laminate([90], AssignmentLamina))
     B.calcLoads()
-    B.calcFailureAll(verbose = True)
+    B.calcFailureNx(verbose = True)
 #

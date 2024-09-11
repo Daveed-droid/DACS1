@@ -228,7 +228,7 @@ class Laminate:
         f_FFp, f_IFFp = np.zeros_like(Xt), np.zeros_like(Xt)
         # Mode C
         f_IFFp = ((N12 / (2 * (1 + pc11) * S)) ** 2 + (N2 / Yc) ** 2) * Yc / -N2
-        mask = np.positive(N2 / N12) <= np.positive(Ra / N12c)  # Mode B
+        mask = np.abs(N2 / N12) <= np.abs(Ra / N12c)  # Mode B
         f_IFFp[mask] = ((N12[mask] / S[mask]) ** 2 + (pc12 * N2[mask] / S[mask]) ** 2) ** 0.5 + pc12 * N2[mask] / S[
             mask]
         mask = N2 >= 0  # Mode A
@@ -261,7 +261,7 @@ class Laminate:
         f_FFp, f_IFFp = np.zeros_like(Xt), np.zeros_like(Xt)
         # Mode C
         f_IFFp = ((N12 / (2 * (1 + pc11) * S)) ** 2 + (N2 / Yc) ** 2) * Yc / -N2
-        mask = np.positive(N2 / N12) <= np.positive(Ra / N12c)  # Mode B
+        mask = np.abs(N2 / N12) <= np.abs(Ra / N12c)  # Mode B
         f_IFFp[mask] = ((N12[mask] / S[mask]) ** 2 + (pc12 * N2[mask] / S[mask]) ** 2) ** 0.5 + pc12 * N2[mask] / S[
             mask]
         mask = N2 >= 0  # Mode A
