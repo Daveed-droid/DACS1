@@ -7,22 +7,6 @@ from collections import Counter
 
 
 class Plate:
-    # def __init__(self, Laminate, a, Px):
-    #     self.Pcr = None
-    #     self.Px = Px
-    #     self.w11 = None
-    #     self.K02 = None
-    #     self.K20 = None
-    #     self.Laminate = Laminate
-    #     self.a = a
-    #     self.A11 = Laminate.ABD[1, 1]
-    #     self.A12 = Laminate.ABD[1, 2]
-    #     self.A22 = Laminate.ABD[2, 2]
-    #     self.D11 = Laminate.ABD[3, 3]
-    #     self.D66 = Laminate.ABD[5, 5]
-    #     self.D12 = Laminate.ABD[3, 4]
-    #     self.D22 = Laminate.ABD[4, 4]
-
     def __init__(self, a, Px):
         self.Pcr = None
         self.Px = Px
@@ -43,8 +27,9 @@ class Plate:
 
     def calcLoads(self, verbose = False):
         # Step 1: Calculate buckling load Pcr
-        self.Pcr = (np.pi ** 2 / self.a) * (self.D11 + 2 * (self.D12 + 2 * self.D66) + self.D22) / (1 + self.A12 / self.A11)
-        # If the panel is in in post-buckling
+        self.Pcr = (np.pi ** 2 / self.a) * (self.D11 + 2 * (self.D12 + 2 * self.D66) + self.D22) / (
+                    1 + self.A12 / self.A11)
+        # If the panel is in post-buckling
         if 1 <= self.Px / self.Pcr:
             # Step 2: Find deflection w_11
             self.w11 = np.sqrt((16 * self.A11 * self.A22 * (self.D11 + 2 * (self.D12 + 2 * self.D66) + self.D22)) / (
@@ -64,8 +49,10 @@ class Plate:
             self.dwdxy = self.w11 * (np.pi / self.a) ** 2 * np.cos(np.pi * self.xv / self.a) * np.cos(
                 np.pi * self.yv / self.a)
             # Step 5: Find loads
-            self.Nx = -(self.Px / self.a + 4 * np.pi ** 2 / self.a ** 2 * self.K02 * np.cos(2 * np.pi * self.yv / self.a))
-            self.Ny = -(self.Py / self.a + 4 * np.pi ** 2 / self.a ** 2 * self.K20 * np.cos(2 * np.pi * self.xv / self.a))
+            self.Nx = -(self.Px / self.a + 4 * np.pi ** 2 / self.a ** 2 * self.K02 * np.cos(
+                2 * np.pi * self.yv / self.a))
+            self.Ny = -(self.Py / self.a + 4 * np.pi ** 2 / self.a ** 2 * self.K20 * np.cos(
+                2 * np.pi * self.xv / self.a))
             self.Nxy = self.xv * 0
             self.Mx = -self.D11 * self.dwdxx - self.D12 * self.dwdyy
             self.My = -self.D12 * self.dwdxx - self.D22 * self.dwdyy
@@ -178,21 +165,14 @@ class Plate:
                 self.calcLoads()
                 State = self.calcFailureNx() if NxOnly else self.calcFailureAll()
                 if not State: nPassed += 1
-                print("{:>12}\tLayup: {:>30}\tPx/Pcr: {:<16}\tPcr: {:<16}".format("Failed" if State else "Not Failed", str(b[l]), round(self.Px / self.Pcr,2), round(self.Pcr,2)))
+                print("{:>12}\tLayup: {:>30}\tPx/Pcr: {:<16}\tPcr: {:<16}".format("Failed" if State else "Not Failed",
+                                                                                  str(b[l]),
+                                                                                  round(self.Px / self.Pcr, 2),
+                                                                                  round(self.Pcr, 2)))
             if 0 < nPassed: break
 
 
-# if __name__=="__main__":
-# Lam = Laminate([0,20,30,50], AssignmentLamina)
-# A = Plate(Lam, 1, 150000)
 if __name__ == "__main__":
-    # Lam = Laminate([0, 20, 30, 50], AssignmentLamina)
-    # A = Plate(Lam, 1, 100000)
-    # A.calcLoads()
-    # State = A.calcFailureNx()
-    # print(State)
-    # A.calcFailureNx()
-    # A.calcOptPly()
     B = Plate(0.4, 20000)
     B.calcOptPly(NxOnly = False)
     B = Plate(0.4, 20000)
