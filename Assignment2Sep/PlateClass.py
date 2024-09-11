@@ -44,6 +44,7 @@ class Plate:
     def calcLoads(self, verbose = False):
         # Step 1: Calculate buckling load Pcr
         self.Pcr = (np.pi ** 2 / self.a) * (self.D11 + 2 * (self.D12 + 2 * self.D66) + self.D22) / (1 + self.A12 / self.A11)
+        # If the panel is in in post-buckling
         if 1 <= self.Px / self.Pcr:
             # Step 2: Find deflection w_11
             self.w11 = np.sqrt((16 * self.A11 * self.A22 * (self.D11 + 2 * (self.D12 + 2 * self.D66) + self.D22)) / (
@@ -79,6 +80,7 @@ class Plate:
             self.Py = self.Px * self.A12 / self.A11
 
     def calcFailureNx(self, verbose = False):
+        # If the panel is in post-buckling
         if 1 <= self.Px / self.Pcr:
             Nx = np.reshape(self.Nx, -1)
             Failed = np.reshape(np.zeros_like(self.xv), -1)
@@ -107,7 +109,9 @@ class Plate:
                 return False
 
     def calcFailureAll(self, verbose = False):
+        # If the panel is in post-buckling
         if 1 <= self.Px / self.Pcr:
+            NxSq, NySq = self.Nx, self.Ny
             Nx, Ny, Nxy = np.reshape(self.Nx, -1), np.reshape(self.Ny, -1), np.reshape(self.Nxy, -1)
             Mx, My, Mxy = np.reshape(self.Mx, -1), np.reshape(self.My, -1), np.reshape(self.Mxy, -1)
             Failed = np.reshape(np.zeros_like(self.xv), -1)
@@ -121,9 +125,17 @@ class Plate:
             FailFloat = np.reshape(FailFloat, (self.xv.shape[0], self.xv.shape[1]))
             if verbose:
                 fig, ax = plt.subplots()
-                c = ax.pcolormesh(self.xv, self.yv, FailFloat, cmap = 'RdBu')
-                ax.set_title('Plot')
+                c = ax.pcolormesh(self.xv, self.yv, FailFloat, cmap = 'Reds')
+                ax.set_title('Damage Plot')
                 fig.colorbar(c, ax = ax)
+                plt.show()
+                fig, ax = plt.subplots()
+                ax.set_title('Nx Plot')
+                ax.plot(NxSq[:, 49], self.yv[:, 49])
+                plt.show()
+                fig, ax = plt.subplots()
+                ax.set_title('Ny Plot')
+                ax.plot(self.xv[49, :], NySq[49, :])
                 plt.show()
             if np.any(Failed):
                 return True
@@ -166,7 +178,7 @@ class Plate:
                 self.calcLoads()
                 State = self.calcFailureNx() if NxOnly else self.calcFailureAll()
                 if not State: nPassed += 1
-                print("{:>12}\tLayup: {:>30}\tPx/Pcr: {:<16}".format("Failed" if State else "Not Failed", str(b[l]), round(self.Px / self.Pcr,2)))
+                print("{:>12}\tLayup: {:>30}\tPx/Pcr: {:<16}\tPcr: {:<16}".format("Failed" if State else "Not Failed", str(b[l]), round(self.Px / self.Pcr,2), round(self.Pcr,2)))
             if 0 < nPassed: break
 
 
@@ -183,4 +195,8 @@ if __name__ == "__main__":
     # A.calcOptPly()
     B = Plate(0.4, 20000)
     B.calcOptPly(NxOnly = False)
+    B = Plate(0.4, 20000)
+    B.ABD(Laminate([90], AssignmentLamina))
+    B.calcLoads()
+    B.calcFailureAll(verbose = True)
 #
