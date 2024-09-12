@@ -225,18 +225,17 @@ class Laminate:
         N12c = S * (1 + 2 * pc11) ** 0.5
 
         Ra = pc11 * S / pc12
-        f_FFp, f_IFFp = np.zeros_like(Xt), np.zeros_like(Xt)
         # Mode C
         f_IFFp = ((N12 / (2 * (1 + pc11) * S)) ** 2 + (N2 / Yc) ** 2) * Yc / -N2
-        mask = np.abs(N2 / N12) <= np.abs(Ra / N12c)  # Mode B
-        f_IFFp[mask] = ((N12[mask] / S[mask]) ** 2 + (pc12 * N2[mask] / S[mask]) ** 2) ** 0.5 + pc12 * N2[mask] / S[
-            mask]
-        mask = N2 >= 0  # Mode A
-        f_IFFp[mask] = (((1 / Yt[mask] - pt12 / S[mask]) * N2[mask]) ** 2 + (N12[mask] / S[mask]) ** 2) ** 0.5 + pt12 * \
-                       N2[mask] / S[mask]
+        maskB = np.abs(N2 / N12) <= np.abs(Ra / N12c)  # Mode B
+        f_IFFp[maskB] = ((N12[maskB] / S[maskB]) ** 2 + (pc12 * N2[maskB] / S[maskB]) ** 2) ** 0.5 + pc12 * N2[maskB] / S[
+            maskB]
+        maskA = N2 >= 0  # Mode A
+        f_IFFp[maskA] = (((1 / Yt[maskA] - pt12 / S[maskA]) * N2[maskA]) ** 2 + (N12[maskA] / S[maskA]) ** 2) ** 0.5 + pt12 * \
+                       N2[maskA] / S[maskA]
         f_FFp = -N1 / Xc
-        mask = N1 >= 0  # FF Tension
-        f_FFp[mask] = N1[mask] / Xt[mask]
+        maskFF = N1 >= 0  # FF Tension
+        f_FFp[maskFF] = N1[maskFF] / Xt[maskFF]
         return f_FFp, f_IFFp  # result of analysis, if f_p is below 1 lamina did not fail, if it is 1 or higher lamina has failed
 
     def PuckStrain(self, Strain):  # Strength is list of ply properties: [Xt_mean,Xc_mean,Yt_mean,Yc_mean,S_mean]
