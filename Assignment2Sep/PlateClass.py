@@ -116,7 +116,7 @@ class Plate:
             else:
                 return False, MaxFailFloat
         else:
-            Load = np.array([self.Px, 0, 0, 0, 0, 0])
+            Load = np.array([self.Px/self.a, 0, 0, 0, 0, 0])
             f_FFp, f_IFFp = self.Laminate.Puck(Load)
             Failed = 1.0 if 1.0 < f_FFp.max() or 1.0 < f_IFFp.max() else 0.0
             MaxFailFloat = max(f_FFp.max(), f_IFFp.max())
@@ -147,7 +147,7 @@ class Plate:
             FFp, IFFp = np.reshape(FFp, (row, col)), np.reshape(IFFp, (row, col))
             if verbose:
                 fig, ax = plt.subplots()
-                c = ax.pcolormesh(self.xv, self.yv, FailFloat, cmap = 'Reds')
+                c = ax.pcolormesh(self.xv, self.yv, FailFloat, cmap = 'jet')
                 ax.set_title('Damage Plot')
                 fig.colorbar(c, ax = ax)
                 plt.show()
@@ -174,7 +174,7 @@ class Plate:
             else:
                 return False, MaxFailFloat
         else:
-            Load = np.array([self.Px, self.Py, 0, 0, 0, 0])
+            Load = np.array([self.Px/self.a, self.Py/self.a, 0, 0, 0, 0])
             f_FFp, f_IFFp = self.Laminate.Puck(Load)
             Failed = 1.0 if 1.0 < f_FFp.max() or 1.0 < f_IFFp.max() else 0.0
             MaxFailFloat = max(f_FFp.max(), f_IFFp.max())
