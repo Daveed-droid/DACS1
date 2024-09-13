@@ -185,6 +185,7 @@ class Plate:
 
     def calcOptPly(self, verbose = False, NxOnly = False, FindFail = False):
         angl = np.arange(-85, 91, 5)
+        print(f"Load: {self.Px/1000} kN | Nx Only {NxOnly}\t"+"="*150)
         for i in range(1, 10):
             a = list(product(angl, repeat = i))  # All permutations
             a = [list(i) for i in a]
@@ -228,7 +229,8 @@ class Plate:
                       "\tw11: {:<8}"
                       "\tK02: {:<8}"
                       "\tK20: {:<8}"
-                      "\tPf: {:<8}".format(
+                      "\tPf: {:<8}"
+                      "\tPcr/Pf: {:<8}".format(
                     "Failed" if State else "Not Failed",
                     str(b[l]),
                     round(self.Px / self.Pcr, 2),
@@ -236,16 +238,34 @@ class Plate:
                     round(self.w11, 4),
                     round(self.K02, 4),
                     round(self.K20, 4),
-                    round(Pf, 2) if not State else "None"
+                    round(Pf, 2) if not State else "None",
+                    round(self.Pcr/Pf, 6) if not State else "None"
                 ))
             if 0 < nPassed: break
 
 
 if __name__ == "__main__":
+    # Nx Only
+    B = Plate(0.4, 1000)
+    B.calcOptPly(NxOnly = True, verbose = False)
+    B = Plate(0.4, 5000)
+    B.calcOptPly(NxOnly = True, verbose = False)
+    B = Plate(0.4, 10000)
+    B.calcOptPly(NxOnly = True, verbose = False)
     B = Plate(0.4, 20000)
+    B.calcOptPly(NxOnly = True, verbose = False)
+    # All Loads
+    B = Plate(0.4, 1000)
+    B.calcOptPly(NxOnly = False, verbose = False)
+    B = Plate(0.4, 5000)
+    B.calcOptPly(NxOnly = False, verbose = False)
+    B = Plate(0.4, 10000)
     B.calcOptPly(NxOnly = False, verbose = False)
     B = Plate(0.4, 20000)
-    B.ABD(Laminate([0, 0], AssignmentLamina))
-    B.calcLoads()
-    B.calcFailureAll(verbose = True)
+    B.calcOptPly(NxOnly = False, verbose = False)
+
+    # B = Plate(0.4, 20000)
+    # B.ABD(Laminate([0, 0], AssignmentLamina))
+    # B.calcLoads()
+    # B.calcFailureAll(verbose = True)
 #
