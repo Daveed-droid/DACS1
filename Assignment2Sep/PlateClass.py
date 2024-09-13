@@ -186,7 +186,7 @@ class Plate:
     def calcOptPly(self, verbose = False, NxOnly = False, FindFail = False):
         angl = np.arange(-85, 91, 5)
         print(f"Load: {self.Px/1000} kN | Nx Only {NxOnly}\t"+"="*150)
-        for i in range(1, 10):
+        for i in range(2, 10):
             a = list(product(angl, repeat = i))  # All permutations
             a = [list(i) for i in a]
             if verbose: print(a)
@@ -212,16 +212,15 @@ class Plate:
                 self.calcLoads()
                 State, MaxFailFloat = self.calcFailureNx(verbose = verbose) if NxOnly else self.calcFailureAll(verbose = verbose)
                 if not State: nPassed += 1
-                if not State:
-                    PxBase = self.Px
-                    Converged = False
-                    while not Converged:
-                        self.Px = self.Px/MaxFailFloat
-                        self.calcLoads()
-                        _, MaxFailFloat = self.calcFailureNx(verbose = verbose) if NxOnly else self.calcFailureAll(verbose = verbose)
-                        Converged = np.isclose(MaxFailFloat, 1, atol = 0.01)
-                    Pf = self.Px
-                    self.Px = PxBase
+                PxBase = self.Px
+                Converged = False
+                while not Converged:
+                    self.Px = self.Px/MaxFailFloat
+                    self.calcLoads()
+                    _, MaxFailFloat = self.calcFailureNx(verbose = verbose) if NxOnly else self.calcFailureAll(verbose = verbose)
+                    Converged = np.isclose(MaxFailFloat, 1, atol = 0.000001)
+                Pf = self.Px
+                self.Px = PxBase
                 print("{:>12}"
                       "\tLayup: {:>30}"
                       "\tPx/Pcr: {:<8}"
@@ -238,8 +237,8 @@ class Plate:
                     round(self.w11, 4),
                     round(self.K02, 4),
                     round(self.K20, 4),
-                    round(Pf, 2) if not State else "None",
-                    round(self.Pcr/Pf, 6) if not State else "None"
+                    round(Pf, 2),
+                    round(self.Pcr/Pf, 6)
                 ))
             if 0 < nPassed: break
 
